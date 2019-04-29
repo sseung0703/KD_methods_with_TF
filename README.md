@@ -45,8 +45,11 @@ Teacher는 ResNet-32, Student는 ResNet-8을 사용한 것으로 각 network는 
 ## Training/Validation plots
 TBA
 
-## Training/Validation plots
-TBA
+## Discussion
+실험에 사용된 Student network는 이미 충분히 잘 training되어 있는 model입니다. 따라서 이를더 개선하기는 상대적으로 어려운 편입니다.
+이로 인해 각 Knowledge distillation methods로 잘 개선되지 않는 모습을 보이고 있습니다.
+이 때 initialization methods (FitNet, FSP, AB)에 비해 multi-task learning (Soft-logits, KD-SVD)가 더 좋은 성능을 보이는 것을 알 수 있습니다.
+즉 스스로 잘 converge할 수 있는 model에게는 좋은 initial point는 그렇게 중요하지 않는 요소이며 regularization이 더 유의미한 효과를 줄 수 있는 것으로 보입니다.
 
 
 
