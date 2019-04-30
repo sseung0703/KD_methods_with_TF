@@ -44,6 +44,17 @@ Teacher는 ResNet-32, Student는 ResNet-8을 사용한 것으로 각 network는 
 모든 network를 학습하기 위한 hyper-parameter는 같으며 자세한 사항은 코드를 확인하시면 됩니다.
 
 ## Training/Validation plots
-TBA
+Methods | Last Accuracy
+------------ | -------------
+Student | 71.92
+Teacher | 78.96
+Soft-logits | 71.72
+FitNet | 71.30
+FSP | 78.96
+KD-SVD | 73.70
+AB | 73.64
+
+<img src="plots.png" width="400">
+
 
 
