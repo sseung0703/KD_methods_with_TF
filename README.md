@@ -27,12 +27,12 @@ Logits이나 feature vector의 Neural response를 통해 knowledge를 정의한 
 - Soft-logit : [Geoffrey Hinton, et al. Distilling the knowledge in a neural network. arXiv:1503.02531, 2015.](https://arxiv.org/abs/1503.02531)
 
 ## Multi-connection Knowledge
-여러 곳에서 Neural response얻어 knowledge를 정의한 기법. 
+Network의 여러 개의 Neural response얻어 knowledge를 정의한 기법. 
 - FitNet : [Adriana Romero, et al. Fitnets: Hints for thin deep nets. arXiv preprint arXiv:1412.6550, 2014.](https://arxiv.org/abs/1412.6550)
 - Activation boundary (AB) : [Byeongho Heo, et. al. Knowledge transfer via distillation of activation boundaries formed by hidden neurons. AAAI2019](https://arxiv.org/abs/1811.03233)
 
 ## Shared-representation Knowledge
-Network의 여러 곳을 sensing 및 relation을 구해 knowledge를 정의한 
+Network의 여러 개의 feature map을 얻은 후 이들의 relation을 구해 knowledge를 정의한 
 - Flow of Procedure (FSP) : [Junho Yim, et. al. A gift from knowledge distillation:
 Fast optimization, network minimization and transfer learning. CVPR 2017.](http://openaccess.thecvf.com/content_cvpr_2017/html/Yim_A_Gift_From_CVPR_2017_paper.html)
 - KD using Singular value decomposition(KD-SVD) : [Seung Hyun Lee, et. al. Self-supervised knowledge distillation using singular value decomposition. ECCV 2018](http://openaccess.thecvf.com/content_ECCV_2018/html/SEUNG_HYUN_LEE_Self-supervised_Knowledge_Distillation_ECCV_2018_paper.html)
