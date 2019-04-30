@@ -46,17 +46,5 @@ Table의 있는 수치와 plot은 5번의 결과를 평균낸 것입니다.
 Teacher는 ResNet-32, Student는 ResNet-8을 사용한 것으로 각 network는 tranining accuracy 기준으로 충분히 converged시킨 후 Knowledge distillation을 적용하였습니다.
 
 ## Training/Validation plots
-Methods | Last Accuracy
------------- | -------------
-Student | 71.76
-Teacher | 78.96
-Soft-logits | 71.79
-FitNet | 72.66
-FSP | 71.33
-KD-SVD | 73.65
-AB | 73.29
-
-<img src="plot.png" width="600">
-
-
+TBA
 
