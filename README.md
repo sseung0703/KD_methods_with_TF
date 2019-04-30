@@ -35,8 +35,9 @@ Fast optimization, network minimization and transfer learning. CVPR 2017.](http:
 
 # Expriment Results
 직접 [ResNet](http://openaccess.thecvf.com/content_cvpr_2016/html/He_Deep_Residual_Learning_CVPR_2016_paper.html)을 통해 Teacher-Student networks를 구현 및 학습한 결과입니다.
-이 실험 결과는 아직 발표되지 않은 제 연구 결과를 얻기 위한 구성으로 다른 기법들은 효과적으로 student network를 개선하지 못한 상황입니다.
-이 결과는 충분한 hyper-parameter search를 거치지 않고 논문에 있는 것을 그대로 사용한 경우이며 만약 optimal hyper-parameter를 찾는 다면 이 결과는 달라질 수 있으니 참고로만 사용해주세요.
+network를 학습하기 위한 hyper-parameter는 모두 통일하여 학습했으며, 각 기법에서 사용하는 hyper-parameter만 tuning하였습니다.
+Table의 있는 수치와 plot은 5번의 결과를 평균낸 것이며 마지막 결과를 가져온 것입니다.
+
 
 ## Network architecture
 Teacher는 ResNet-32, Student는 ResNet-8을 사용한 것으로 각 network는 tranining accuracy 기준으로 충분히 converged되었습니다.
