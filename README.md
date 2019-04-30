@@ -56,7 +56,7 @@ FSP | 71.33
 KD-SVD | 73.65
 AB | 73.29
 
-<img src="plot.png" width="400">
+<img src="plot.png" width="600">
 
 
 
