@@ -39,12 +39,24 @@ Fast optimization, network minimization and transfer learning. CVPR 2017.](http:
 
 # Expriment Results
 직접 [ResNet](http://openaccess.thecvf.com/content_cvpr_2016/html/He_Deep_Residual_Learning_CVPR_2016_paper.html)을 통해 Teacher-Student networks를 구현 및 학습한 결과입니다.
-network를 학습하기 위한 hyper-parameter는 모두 통일하여 학습했으며, 각 기법에서 사용하는 hyper-parameter만 tuning하였습니다.
-Table의 있는 수치와 plot은 5번의 결과를 평균낸 것입니다.
+network를 학습하기 위한 hyper-parameter는 모두 통일하여 학습했으며, 각 기법에서 사용하는 hyper-parameter만 tuning하였습니다. 많은 수의 실험을 하지 않았기 때문에 hyper-parameter는 optimal이 아닐 수 있으며 아래 table과 표의 수치는 참고로만 봐주시면 될 것 같습니다. Table의 있는 수치와 plot은 5번의 결과를 평균낸 것입니다.
+
+
 
 ## Network architecture
 Teacher는 ResNet-32, Student는 ResNet-8을 사용한 것으로 각 network는 tranining accuracy 기준으로 충분히 converged시킨 후 Knowledge distillation을 적용하였습니다.
 
 ## Training/Validation plots
-TBA
+
+Methods | Last Accuracy | Best Accuracy
+------------ | ------------- | -------------
+Student     | 71.76 | 71.92 
+Teacher     | 78.96 | 79.08 
+Soft-logits | 71.79 | 72.08 
+FitNet        | 72.74 | 72.96
+FSP          | 71.56 | 71.70
+KD-SVD    | 73.68 | 73.78
+AB            | 72.80 |73.10
+
+<img src="plots.png" width="600">
 
