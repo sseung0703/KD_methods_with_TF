@@ -24,11 +24,11 @@ def FitNet(student, teacher):
                 with tf.variable_scope('Map'):
                     target = tf.contrib.layers.fully_connected(target, Ds, biases_initializer = None, trainable=True, scope = 'fc')
             
-            return tf.reduce_mean(tf.square(source-target))
+            return tf.reduce_sum(tf.square(source-target))
     B = student[0].get_shape().as_list()[0]
-    return tf.add_n([Guided(std, tch) for i, std, tch in zip(range(len(student)), student, teacher)])
+    return tf.add_n([Guided(std, tch) for i, std, tch in zip(range(len(student)), student, teacher)])/B
       
-def FSP(students, teachers):
+def FSP(students, teachers, weight = 1e-2):
     '''
     Junho Yim, Donggyu Joo, Jihoon Bae, and Junmo Kim.
     A gift from knowledge distillation: Fast optimization, network minimization and transfer learning. 
@@ -46,18 +46,16 @@ def FSP(students, teachers):
             bot = tf.reshape(bot,[b_sz[0], -1, b_sz[-1]])
     
             Gram = tf.matmul(top, bot, transpose_a = True)/(b_sz[1]*b_sz[2])
-            return Gram, t_sz[-1]*b_sz[-1]
+            return Gram
     with tf.variable_scope('FSP'):
-        N = 0                    
         Dist_loss = []
         for i in range(len(students)-1):
-            gs0, _ = Grammian(students[i], students[i+1])
-            gt0, n = Grammian(teachers[i], teachers[i+1])
+            gs0 = Grammian(students[i], students[i+1])
+            gt0 = Grammian(teachers[i], teachers[i+1])
      
             Dist_loss.append(tf.reduce_mean(tf.reduce_sum(tf.square(tf.stop_gradient(gt0)-gs0),[1,2])/2 ))
-            N += n
 
-        return tf.add_n(Dist_loss)/N    
+        return tf.add_n(Dist_loss)*weight
 
 def KD_SVD(student_feature_maps, teacher_feature_maps):
     '''
@@ -94,7 +92,7 @@ def KD_SVD(student_feature_maps, teacher_feature_maps):
 
         return transfer_loss
       
-def AB_distillation(student, teacher, margin=1. , weight = 1e-3):
+def AB_distillation(student, teacher, margin=1., weight = 1e-3):
     '''
     Byeongho Heo,  Minsik Lee,  Sangdoo Yun,  and Jin Young Choi.   
     Knowledge transfer via distillation of activation boundaries formed by hidden neurons.

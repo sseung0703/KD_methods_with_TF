@@ -1,11 +1,6 @@
 import tensorflow as tf
 from tensorflow.python.ops import control_flow_ops
 
-def sigmoid(x, k, d = 1):
-    s = 1/(1+tf.exp(-(x-k)/d))
-    s = tf.cond(tf.greater(s,1-1e-8),
-                lambda : 1.0, lambda : s)
-    return s
 def Optimizer_w_Distillation(class_loss, LR, epoch, init_epoch, global_step, Distillation):
     with tf.variable_scope('Optimizer_w_Distillation'):
         # get variables and update operations
@@ -51,6 +46,12 @@ def Optimizer_w_Distillation(class_loss, LR, epoch, init_epoch, global_step, Dis
         elif Distillation == 'KD-SVD':
             # multi-task learning w/ distillation gradients clipping
             # distillation gradients are clipped by norm of main-task gradients
+            def sigmoid(x, k, d = 1):
+                s = 1/(1+tf.exp(-(x-k)/d))
+                s = tf.cond(tf.greater(s,1-1e-8),
+                            lambda : 1.0, lambda : s)
+                return s
+            
             reg_loss = tf.add_n(tf.losses.get_regularization_losses())
             distillation_loss = tf.add_n(tf.get_collection('dist'))
             

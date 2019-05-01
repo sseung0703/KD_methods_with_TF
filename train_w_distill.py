@@ -1,14 +1,14 @@
 import tensorflow as tf
 
 from tensorflow import ConfigProto
-slim = tf.contrib.slim
+from tensorflow.keras.datasets.cifar100 import load_data
 
 import time
 import scipy.io as sio
 import numpy as np
 
 from nets import nets_factory
-from tensorflow.keras.datasets.cifar100 import load_data
+
 from random import shuffle
 import os
 import scipy.io as sio
@@ -16,15 +16,15 @@ import op_util
 
 home_path = os.path.dirname(os.path.abspath(__file__))
 
-tf.app.flags.DEFINE_string('train_dir', '/home/dmsl/Documents/tf/KD/GIT/KD-SVD/kdsvd2',
+tf.app.flags.DEFINE_string('train_dir', '/home/dmsl/Documents/tf/KD/GIT/ResNet_/FSP_/fsp0',
                            'Directory where checkpoints and event logs are written to.')
-tf.app.flags.DEFINE_string('Distillation', 'KD-SVD',
+tf.app.flags.DEFINE_string('Distillation', 'AB',
                            'Distillation method : Soft_logits, FitNet, FSP, KD-SVD, AB')
 FLAGS = tf.app.flags.FLAGS
 def main(_):
     ### define path and hyper-parameter
     model_name   = 'ResNet'
-    Learning_rate =1e-1
+    Learning_rate =1e-1# initialization methods : 1e-2, others : 1e-1
 
     batch_size = 128
     val_batch_size = 200
@@ -38,6 +38,9 @@ def main(_):
     save_summaries_secs = 20
     tf.logging.set_verbosity(tf.logging.INFO)
     gpu_num = '0'
+
+    if FLAGS.Distillation == 'None':
+        FLAGS.Distillation = None
     
     with tf.Graph().as_default() as graph:
         # make placeholder for inputs
@@ -47,7 +50,7 @@ def main(_):
         
         # pre-processing
         image = pre_processing(train_image, is_training = True)
-        label = slim.one_hot_encoding(train_label, 100, on_value=1.0)
+        label = tf.contrib.layers.one_hot_encoding(train_label, 100, on_value=1.0)
      
         # make global step
         global_step = tf.train.create_global_step()
@@ -71,7 +74,7 @@ def main(_):
         ## make clone model to validate
         val_image = tf.placeholder(tf.float32, [val_batch_size]+image.get_shape().as_list()[1:])
         val_label = tf.placeholder(tf.int32, [val_batch_size])
-        val_label_onhot = slim.one_hot_encoding(val_label, 100,on_value=1.0)
+        val_label_onhot = tf.contrib.layers.one_hot_encoding(val_label, 100,on_value=1.0)
         val_image_ = pre_processing(val_image, is_training = False)
         val_loss, val_accuracy = MODEL(model_name, 0., val_image_, val_label_onhot,
                                        is_training = False, reuse = True, drop = False, Distillation = FLAGS.Distillation)
@@ -101,10 +104,12 @@ def main(_):
                 ## this mechanism is slower but easier to modifier than load checkpoint
                 global_variables  = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES)
                 p = sio.loadmat(home_path + '/pre_trained/ResNet32.mat')
+                n = 0
                 for v in global_variables:
                     if p.get(v.name[:-2]) is not None:
                         sess.run(v.assign(p[v.name[:-2]].reshape(*v.get_shape().as_list()) ))
-                print ('Teacher params assigned')
+                        n += 1
+                print ('%d Teacher params assigned'%n)
                 
             sum_train_accuracy = 0; time_elapsed = 0; total_loss = 0
             idx = list(range(train_labels.shape[0]))
@@ -114,10 +119,10 @@ def main(_):
                 train_batch = train_images[idx[:batch_size]]
                 
                 ## tf.__version < 1.10
-                random_seed = [1]*(batch_size//2) + [-1]*(batch_size//2)
-                shuffle(random_seed)
-                train_batch = [ti if seed > 0 else np.fliplr(ti)
-                               for seed, ti in zip(random_seed, train_batch)]
+#                random_seed = [1]*(batch_size//2) + [-1]*(batch_size//2)
+#                shuffle(random_seed)
+#                train_batch = [ti if seed > 0 else np.fliplr(ti)
+#                               for seed, ti in zip(random_seed, train_batch)]
                 
                 ## feed data
                 tl, log, train_acc = sess.run([train_op, summary_op, train_accuracy],
@@ -133,7 +138,7 @@ def main(_):
 
                 total_loss += tl
                 sum_train_accuracy += train_acc
-                if ( step % (decay_steps) == 0)&(step//decay_steps>=init_epoch):
+                if ( step % (decay_steps) == 0) and (step//decay_steps>=init_epoch):
                     ## do validation
                     sum_val_accuracy = 0
                     
@@ -145,10 +150,11 @@ def main(_):
 
                     tf.logging.info('Epoch %s Step %s - train_Accuracy : %.2f%%  val_Accuracy : %.2f%%'
                                     %(str((step)//decay_steps).rjust(3, '0'), str(step).rjust(6, '0'), 
-                                    sum_train_accuracy *100/decay_steps, sum_val_accuracy *100/val_itr))
+                                    sum_train_accuracy *100/decay_steps if step//decay_steps>init_epoch else 1., 
+                                    sum_val_accuracy *100/val_itr))
 
                     result_log = sess.run(val_summary_op, feed_dict={
-                                                                     train_acc_place : sum_train_accuracy*100/decay_steps,
+                                                                     train_acc_place : sum_train_accuracy*100/decay_steps if step//decay_steps>init_epoch else 1.,
                                                                      val_acc_place   : sum_val_accuracy*100/val_itr,
                                                                      })
                     if step//decay_steps == init_epoch and init_epoch > 0:
@@ -197,7 +203,7 @@ def MODEL(model_name, weight_decay, image, label, is_training, reuse, drop, Dist
     end_points = network_fn(image, is_training=is_training, reuse=reuse, drop = drop, Distill=Distillation)
 
     loss = tf.losses.softmax_cross_entropy(label,end_points['Logits'])
-    accuracy = slim.metrics.accuracy(tf.to_int32(tf.argmax(end_points['Logits'], 1)), tf.to_int32(tf.argmax(label, 1)))
+    accuracy = tf.contrib.metrics.accuracy(tf.to_int32(tf.argmax(end_points['Logits'], 1)), tf.to_int32(tf.argmax(label, 1)))
     return loss, accuracy
     
 def pre_processing(image, is_training):
@@ -205,7 +211,7 @@ def pre_processing(image, is_training):
         image = tf.to_float(image)
         image = (image-np.array([112.4776,124.1058,129.3773],dtype=np.float32).reshape(1,1,3))/np.array([70.4587,65.4312,68.2094],dtype=np.float32).reshape(1,1,3)
         if is_training:
-#            image = tf.image.random_flip_left_right(image) # tf.__version__ > 1.10
+            image = tf.image.random_flip_left_right(image) # tf.__version__ > 1.10
             image = tf.pad(image, [[0,0],[4,4],[4,4],[0,0]], 'REFLECT')
             image = tf.random_crop(image,[image.get_shape().as_list()[0],32,32,3])
     return image

@@ -25,8 +25,6 @@ def SVD(X, n, name = None):
         
         V = removenan(V)
         U = removenan(U)
-#        sign = tf.sign(tf.reduce_sum(removenan(U),1,keepdims=True))
-#        V *= sign
         
         V /= tf.sqrt(tf.reduce_sum(tf.square(V),1,keepdims=True)+1e-3)
         U /= tf.sqrt(tf.reduce_sum(tf.square(U),1,keepdims=True)+1e-3)
@@ -42,7 +40,6 @@ def Align_rsv(x, y, x_s, y_s, k):
     r = tf.constant(np.array( list(range(x_sz[0])) ).reshape(-1,1,1),dtype=tf.int32)
     cosine = tf.matmul(x, y, transpose_a=True)
     index = tf.expand_dims(tf.cast(tf.argmax(tf.abs(cosine),1),tf.int32),-1)
-#    index = tf.expand_dims(tf.cast(tf.argmax(cosine,1),tf.int32),-1)
     for i in range(k):
         idx = tf.slice(index,[0,i,0],[-1,1,-1])
         idx = tf.concat([r, idx],2)
@@ -51,7 +48,6 @@ def Align_rsv(x, y, x_s, y_s, k):
     
     x = tf.transpose(tf.concat(x_temp,1),[0,2,1])
     x_s = tf.transpose(tf.concat(x_s_temp,1),[0,2,1])
-#    x_s = tf.concat(x_s_temp,1)
     
     cosine = tf.expand_dims(tf.matrix_diag_part(tf.matmul(x, y, transpose_a=True)),1)
     x   *= tf.sign(cosine)
@@ -79,15 +75,6 @@ def gradient_svd(op, ds, dU, dV):
     KT = tf.matrix_transpose(k)
     KT = removenan(KT)
 
-#    D = tf.matmul(dU,tf.matrix_diag(1/(s+1e-8)))
-#    US = tf.matmul(U,S)
-#    grad = tf.matmul(D, V, transpose_b=True)\
-#          +tf.matmul(tf.matmul(U,tf.matrix_diag(tf.matrix_diag_part(-tf.matmul(U,D,transpose_a=True)))), V, transpose_b=True)\
-#          +tf.matmul(2*tf.matmul(US, msym(KT*(tf.matmul(V,-tf.matmul(V,tf.matmul(D,US,transpose_a=True)),transpose_a=True)))),V,transpose_b=True)
-#
-#    grad+= tf.matmul(2*tf.matmul(US, msym(KT*(tf.matmul(V,dV,transpose_a=True))) ),V,transpose_b=True)
-#    grad = removenan(grad)
-    
     if u_sz<v_sz:
         U, V = (V, U); dU, dV = (dV, dU)
         D = tf.matmul(dU,tf.matrix_diag(1/(s+1e-8)))
@@ -103,3 +90,4 @@ def gradient_svd(op, ds, dU, dV):
         US = tf.matmul(U,S)
         grad = tf.matmul(2*tf.matmul(US, msym(KT*(tf.matmul(V,dV,transpose_a=True))) ),V,transpose_b=True)
     return [grad]
+

@@ -82,22 +82,23 @@ def ResNet(image, is_training=False, reuse = False, drop = False, Distill = None
                 feats = tf.get_collection('feat')
                 student_feats = feats[:len(feats)//2]
                 teacher_feats = feats[len(feats)//2:]
-                end_points['Dist'] = Dist.FitNet(student_feats[1:], teacher_feats[1:])
+                end_points['Dist'] = Dist.FitNet(student_feats, teacher_feats)
                 
             elif Distill == 'FSP':
                 feats = tf.get_collection('feat')
                 student_feats = feats[:len(feats)//2]
                 teacher_feats = feats[len(feats)//2:]
-                end_points['Dist'] = Dist.FSP(student_feats[1:], teacher_feats[1:])
+                end_points['Dist'] = Dist.FSP(student_feats, teacher_feats)
             elif Distill == 'KD-SVD':
                 feats = tf.get_collection('feat')
                 student_feats = feats[:len(feats)//2]
                 teacher_feats = feats[len(feats)//2:]
-                end_points['Dist'] = Dist.KD_SVD(student_feats[1:], teacher_feats[1:])
+                end_points['Dist'] = Dist.KD_SVD(student_feats, teacher_feats)
             elif Distill == 'AB':
                 feats = tf.get_collection('feat')
                 student_feats = feats[:len(feats)//2]
                 teacher_feats = feats[len(feats)//2:]
-                end_points['Dist'] = Dist.AB_distillation(student_feats[1:], teacher_feats[1:], 1., 1e-3)
+                end_points['Dist'] = Dist.AB_distillation(student_feats, teacher_feats, 1., 3e-4)
             tf.add_to_collection('dist', end_points['Dist'])
     return end_points
+
