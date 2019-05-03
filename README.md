@@ -32,10 +32,14 @@ Network의 여러 개의 Neural response얻어 knowledge를 정의한 기법.
 - Activation boundary (AB) : [Byeongho Heo, et. al. Knowledge transfer via distillation of activation boundaries formed by hidden neurons. AAAI2019](https://arxiv.org/abs/1811.03233)
 
 ## Shared-representation Knowledge
-Network의 여러 개의 feature map을 얻은 후 이들의 relation을 구해 knowledge를 정의한 
+Network의 여러 개의 feature map을 얻은 후 이들의 relation을 구해 knowledge를 정의한 기법.
 - Flow of Procedure (FSP) : [Junho Yim, et. al. A gift from knowledge distillation:
 Fast optimization, network minimization and transfer learning. CVPR 2017.](http://openaccess.thecvf.com/content_cvpr_2017/html/Yim_A_Gift_From_CVPR_2017_paper.html)
 - KD using Singular value decomposition(KD-SVD) : [Seung Hyun Lee, et. al. Self-supervised knowledge distillation using singular value decomposition. ECCV 2018](http://openaccess.thecvf.com/content_ECCV_2018/html/SEUNG_HYUN_LEE_Self-supervised_Knowledge_Distillation_ECCV_2018_paper.html)
+
+## Relational Knowledge
+dataset 또는 batch 단위의 set을 통해 knowledge를 정의한 기법.
+- Relational Knowledge Distillation (In process) [Wonpyo Park, et. al. Relational Knowledge Distillation](https://arxiv.org/abs/1904.05068?context=cs.LG)
 
 # Expriment Results
 직접 [ResNet](http://openaccess.thecvf.com/content_cvpr_2016/html/He_Deep_Residual_Learning_CVPR_2016_paper.html)을 통해 Teacher-Student networks를 구현 및 학습한 결과입니다.
