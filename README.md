@@ -1,12 +1,4 @@
 # Knowledge Distillation Methods with Tensorflow
-Knowledge distillation은 Teacher의 knowledge를 통해 student network를 개선하는 매우 효과적인 기법입니다.
-이에 따라 최근까지 지속적으로 새로운 기법들이 제시되고 있습니다.
-하지만 각 논문에서 선정하는 비교 기법과 네트워크 등이 전부 다릅니다.
-또한 각 기법들이 각 저자에 의해 구현되었기 때문에 새로 knowledge distillation을 연구하려고 하면 각 기법들을 전부 찾아보거나 직접 구현해야하는 부담감이 있습니다.
-이를 조금이나마 덜어드리고자, 제가 논문 제출을 위해 작성했던 코드에서 군더더기를 최대한 제거하고 수정하기 쉽도록 만든 코드를 공개하고자 합니다.
-지속적으로 새로운 기법들을 구현 및 추가할 계획이며, 모든 기법은 Tensorflow로 구현할 계획입니다.
-아직 부족하지만 지속적으로 개선할 계획이며 언제든지 지적 및 조언 부탁드립니다.
-
 (Sadly, my English skill is terribly low!! so please get patient to read my mess of words. :) )
 
 Knowledge distillation is the method to enhance student network by teacher knowledge.
@@ -17,28 +9,25 @@ I'll update code and knowledge distillation algorithm, and all of things will be
 Now this repository is not so perfect but i will be improved, so please give some advise to be. (especially English.. :D)
 
 # Implemented Knowledge Distillation Methods
-구현된 기법들입니다. 각 분류법은 Seyed-Iman Mirzadeh et. al의 [TAKD](https://arxiv.org/abs/1902.03393)에서 영감을 얻어 만든 것입니다.
-개인적으로 의미있는 분류라고 생각하여 작성하였습니다. 문제가 있다면 지적 부탁드립니다. :)
-
 below methods are implemented and base on insight with [TAKD](https://arxiv.org/abs/1902.03393), I make each category. I think they are meaningful category, but if you think it has problem please notice for me :)
 
 ## Response-based Knowledge
-Logits이나 feature vector의 Neural response를 통해 knowledge를 정의한 기법. 
+Defined knowledge by the neural response of the hidden layer or the output layer of the network
 - Soft-logit : [Geoffrey Hinton, et al. Distilling the knowledge in a neural network. arXiv:1503.02531, 2015.](https://arxiv.org/abs/1503.02531)
 
 ## Multi-connection Knowledge
-Network의 여러 개의 Neural response얻어 knowledge를 정의한 기법. 
+Increases knowledge by sensing several points of the teacher network
 - FitNet : [Adriana Romero, et al. Fitnets: Hints for thin deep nets. arXiv preprint arXiv:1412.6550, 2014.](https://arxiv.org/abs/1412.6550)
 - Activation boundary (AB) : [Byeongho Heo, et. al. Knowledge transfer via distillation of activation boundaries formed by hidden neurons. AAAI2019](https://arxiv.org/abs/1811.03233)
 
 ## Shared-representation Knowledge
-Network의 여러 개의 feature map을 얻은 후 이들의 relation을 구해 knowledge를 정의한 기법.
+Defined knowledge by the relation between two feature maps
 - Flow of Procedure (FSP) : [Junho Yim, et. al. A gift from knowledge distillation:
 Fast optimization, network minimization and transfer learning. CVPR 2017.](http://openaccess.thecvf.com/content_cvpr_2017/html/Yim_A_Gift_From_CVPR_2017_paper.html)
 - KD using Singular value decomposition(KD-SVD) : [Seung Hyun Lee, et. al. Self-supervised knowledge distillation using singular value decomposition. ECCV 2018](http://openaccess.thecvf.com/content_ECCV_2018/html/SEUNG_HYUN_LEE_Self-supervised_Knowledge_Distillation_ECCV_2018_paper.html)
 
 ## Relational Knowledge
-dataset 또는 batch 단위의 set을 통해 knowledge를 정의한 기법.
+Defined knoweldge by intra-data relation
 - Relational Knowledge Distillation (In process) [Wonpyo Park, et. al. Relational Knowledge Distillation](https://arxiv.org/abs/1904.05068?context=cs.LG)
 
 # Expriment Results
