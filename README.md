@@ -31,13 +31,14 @@ Defined knoweldge by intra-data relation
 - Relational Knowledge Distillation (In process) [Wonpyo Park, et. al. Relational Knowledge Distillation](https://arxiv.org/abs/1904.05068?context=cs.LG)
 
 # Expriment Results
-직접 [ResNet](http://openaccess.thecvf.com/content_cvpr_2016/html/He_Deep_Residual_Learning_CVPR_2016_paper.html)을 통해 Teacher-Student networks를 구현 및 학습한 결과입니다.
-network를 학습하기 위한 hyper-parameter는 모두 통일하여 학습했으며, 각 기법에서 사용하는 hyper-parameter만 tuning하였습니다. 많은 수의 실험을 하지 않았기 때문에 hyper-parameter는 optimal이 아닐 수 있으며 아래 table과 표의 수치는 참고로만 봐주시면 될 것 같습니다. Table의 있는 수치와 plot은 5번의 결과를 평균낸 것입니다.
+below table and plot are sample results using [ResNet](http://openaccess.thecvf.com/content_cvpr_2016/html/He_Deep_Residual_Learning_CVPR_2016_paper.html).
+
+I use same hyper-parameter for training each networks, and only tune hyper-parameter of each distillation algorithm. But the results may be not optimal. All of numerical values and plots are averages of five trials.
 
 
 
 ## Network architecture
-Teacher는 ResNet-32, Student는 ResNet-8을 사용한 것으로 각 network는 tranining accuracy 기준으로 충분히 converged시킨 후 Knowledge distillation을 적용하였습니다.
+Teacher network is ResNet32 and Student is ResNet8, and student network is well-converged (not over and under-fit) for evaluating each distillation algorithms performance precisely.
 
 ## Training/Validation plots
 
