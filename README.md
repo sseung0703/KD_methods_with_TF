@@ -18,6 +18,7 @@ Defined knowledge by the neural response of the hidden layer or the output layer
 ## Multi-connection Knowledge
 Increases knowledge by sensing several points of the teacher network
 - FitNet : [Adriana Romero, et al. Fitnets: Hints for thin deep nets. arXiv preprint arXiv:1412.6550, 2014.](https://arxiv.org/abs/1412.6550)
+- Attention transfer (AT) : [Zagoruyko, Sergey et. al. Paying more attention to attention: Improving the performance of convolutional neural networks via attention transfer. arXiv preprint arXiv:1612.03928, 2016.](https://arxiv.org/pdf/1612.03928.pdf)
 - Activation boundary (AB) : [Byeongho Heo, et. al. Knowledge transfer via distillation of activation boundaries formed by hidden neurons. AAAI2019](https://arxiv.org/abs/1811.03233)
 
 ## Shared-representation Knowledge
@@ -48,6 +49,7 @@ Student     | 71.76 | 71.92
 Teacher     | 78.96 | 79.08 
 Soft-logits | 71.79 | 72.08 
 FitNet        | 72.74 | 72.96
+AT           | 72.31 | 72.60
 FSP          | 71.56 | 71.70
 KD-SVD    | 73.68 | 73.78
 AB            | 72.80 |73.10
