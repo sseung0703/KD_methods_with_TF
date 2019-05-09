@@ -16,17 +16,17 @@ import op_util
 
 home_path = os.path.dirname(os.path.abspath(__file__))
 
-tf.app.flags.DEFINE_string('train_dir', '/home/dmsl/Documents/tf/KD/GIT/ResNet_/FSP_/fsp0',
+tf.app.flags.DEFINE_string('train_dir', 'test',
                            'Directory where checkpoints and event logs are written to.')
-tf.app.flags.DEFINE_string('Distillation', 'AB',
-                           'Distillation method : Soft_logits, FitNet, FSP, KD-SVD, AB')
+tf.app.flags.DEFINE_string('Distillation', 'KD-SVD',
+                           'Distillation method : Soft_logits, FitNet, AT, FSP, KD-SVD, AB')
 FLAGS = tf.app.flags.FLAGS
 def main(_):
     ### define path and hyper-parameter
     model_name   = 'ResNet'
     Learning_rate =1e-1# initialization methods : 1e-2, others : 1e-1
 
-    batch_size = 128
+    batch_size = 16
     val_batch_size = 200
     train_epoch = 100
     init_epoch = 40 if FLAGS.Distillation == 'FitNet' or FLAGS.Distillation == 'FSP' or FLAGS.Distillation == 'AB' else 0

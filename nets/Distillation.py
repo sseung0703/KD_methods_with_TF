@@ -27,7 +27,30 @@ def FitNet(student, teacher):
             return tf.reduce_sum(tf.square(source-target))
     B = student[0].get_shape().as_list()[0]
     return tf.add_n([Guided(std, tch) for i, std, tch in zip(range(len(student)), student, teacher)])/B
-      
+
+def Attention_transfer(student, teacher, beta = 1e3):
+    '''
+     Zagoruyko, Sergey and Komodakis, Nikos.
+     Paying more attention to attention: Improving the performance of convolutional neural networks via attention transfer.
+     arXiv preprint arXiv:1612.03928, 2016.
+    '''
+    def Attention(source, target):
+        with tf.variable_scope('Attention'):
+            B,_,_,Ds = source.get_shape().as_list()
+            Dt = target.get_shape().as_list()[-1]
+            if Ds != Dt:
+                with tf.variable_scope('Map'):
+                    source = tf.contrib.layers.fully_connected(source, Ds, biases_initializer = None, trainable=True, scope = 'fc')
+            
+            Qt = tf.reshape(tf.reduce_mean(tf.square(source),-1),[B,-1])
+            Qt /= tf.sqrt(tf.reduce_sum(tf.square(Qt),1,keepdims=True))
+            
+            Qs = tf.reshape(tf.reduce_mean(tf.square(target),-1),[B,-1])
+            Qs /= tf.sqrt(tf.reduce_sum(tf.square(Qs),1,keepdims=True))
+            
+            return tf.reduce_mean(tf.square(Qt-Qs))*beta/2
+    return tf.add_n([Attention(std, tch) for i, std, tch in zip(range(len(student)), student, teacher)])
+  
 def FSP(students, teachers, weight = 1e-2):
     '''
     Junho Yim, Donggyu Joo, Jihoon Bae, and Junmo Kim.
@@ -57,7 +80,7 @@ def FSP(students, teachers, weight = 1e-2):
 
         return tf.add_n(Dist_loss)*weight
 
-def KD_SVD(student_feature_maps, teacher_feature_maps):
+def KD_SVD(student_feature_maps, teacher_feature_maps, decom_type = 'EID'):
     '''
     Seung Hyun Lee, Dae Ha Kim, and Byung Cheol Song.
     Self-supervised knowledge distillation using singular value decomposition. In
@@ -69,13 +92,19 @@ def KD_SVD(student_feature_maps, teacher_feature_maps):
         V_Tb = V_Sb = None
         for i, sfm, tfm in zip(range(len(student_feature_maps)), student_feature_maps, teacher_feature_maps):
             with tf.variable_scope('Compress_feature_map%d'%i):
-                Sigma_T, U_T, V_T = SVP.SVD(tfm, K, name = 'TSVD%d'%i)
-                Sigma_S, U_S, V_S = SVP.SVD(sfm, K, name = 'SSVD%d'%i)
-                B, D,_ = V_S.get_shape().as_list()
-                V_S, U_S, V_T = SVP.Align_rsv(V_S, V_T, U_S, Sigma_T, K)
-                Sigma_T = tf.expand_dims(Sigma_T,1)
-                V_T *= Sigma_T
-                V_S *= Sigma_T
+                if decom_type == 'SVD':
+                    Sigma_T, U_T, V_T = SVP.SVD(tfm, K, name = 'TSVD%d'%i)
+                    Sigma_S, U_S, V_S = SVP.SVD(sfm, K, name = 'SSVD%d'%i)
+                    B, D,_ = V_S.get_shape().as_list()
+                    V_S, U_S, V_T = SVP.Align_rsv(V_S, V_T, U_S, Sigma_T, K)
+                    
+                elif decom_type == 'EID':
+                    Sigma_T, U_T, V_T = SVP.SVD_eid(tfm, K, name = 'TSVD%d'%i)
+                    Sigma_S, U_S, V_S = SVP.SVD_eid(sfm, K, name = 'SSVD%d'%i)
+                    B, D,_ = V_S.get_shape().as_list()
+                    V_S, U_S, V_T = SVP.Align_rsv(V_S, V_T, U_S, Sigma_T, K)
+                    
+                    Sigma_T, U_T, V_T = SVP.SVD_eid(tfm, K, name = 'TSVD%d'%i)
                 
             if i > 0:
                 with tf.variable_scope('RBF%d'%i):    

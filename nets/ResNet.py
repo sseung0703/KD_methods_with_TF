@@ -30,7 +30,10 @@ def ResBlock(x, depth, stride, get_feat, is_training, reuse, name):
         if stride > 1 or depth != x.get_shape().as_list()[-1]:
             x = tf.contrib.layers.conv2d(x, depth, [1,1], stride, scope='conv2', trainable=is_training, reuse = reuse)
             x = tf.contrib.layers.batch_norm(x, scope='bn2', trainable = is_training, is_training=is_training, reuse = reuse, activation_fn = None)
-        out = tf.nn.relu(x+out)
+        out = x+out
+        if get_feat:
+            tf.add_to_collection('feat_noact', out)
+        out = tf.nn.relu(out)
         if get_feat:
             tf.add_to_collection('feat', out)
         return out
@@ -76,29 +79,26 @@ def ResNet(image, is_training=False, reuse = False, drop = False, Distill = None
                                                       trainable=False, scope = 'full', reuse = False)
                     end_points['Logits_tch'] = logits_tch
         with tf.variable_scope('Distillation'):
+            feats = tf.get_collection('feat')
+            student_feats = feats[:len(feats)//2]
+            teacher_feats = feats[len(feats)//2:]
+            feats_noact = tf.get_collection('feat_noact')
+            student_feats_noact = feats[:len(feats_noact)//2]
+            teacher_feats_noact = feats[len(feats_noact)//2:]
+            
             if Distill == 'Soft_logits':
                 end_points['Dist'] = Dist.Soft_logits(logits, logits_tch, 3)
             elif Distill == 'FitNet':
-                feats = tf.get_collection('feat')
-                student_feats = feats[:len(feats)//2]
-                teacher_feats = feats[len(feats)//2:]
                 end_points['Dist'] = Dist.FitNet(student_feats, teacher_feats)
-                
+            elif Distill == 'AT':
+                end_points['Dist'] = Dist.Attention_transfer(student_feats_noact, teacher_feats_noact)
             elif Distill == 'FSP':
-                feats = tf.get_collection('feat')
-                student_feats = feats[:len(feats)//2]
-                teacher_feats = feats[len(feats)//2:]
                 end_points['Dist'] = Dist.FSP(student_feats, teacher_feats)
             elif Distill == 'KD-SVD':
-                feats = tf.get_collection('feat')
-                student_feats = feats[:len(feats)//2]
-                teacher_feats = feats[len(feats)//2:]
                 end_points['Dist'] = Dist.KD_SVD(student_feats, teacher_feats)
             elif Distill == 'AB':
-                feats = tf.get_collection('feat')
-                student_feats = feats[:len(feats)//2]
-                teacher_feats = feats[len(feats)//2:]
-                end_points['Dist'] = Dist.AB_distillation(student_feats, teacher_feats, 1., 3e-4)
+                end_points['Dist'] = Dist.AB_distillation(student_feats, teacher_feats, 1., 1e-3)
+
             tf.add_to_collection('dist', end_points['Dist'])
     return end_points
 
