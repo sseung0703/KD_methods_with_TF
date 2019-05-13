@@ -142,3 +142,41 @@ def AB_distillation(student, teacher, margin=1., weight = 1e-3):
     B = student[0].get_shape().as_list()[0]
     return tf.add_n([criterion_alternative_L2(std, tch, margin)/B/2**(-i)
                     for i, std, tch in zip(range(len(student)), student, teacher)])*weight
+    
+def RKD(source, target, l = [1e2,2e2]):
+    '''
+    Wonpyo Park, Dongju Kim, Yan Lu, Minsu Cho.  
+    relational knowledge distillation.
+    arXiv preprint arXiv:1904.05068, 2019.
+    '''
+    with tf.variable_scope('Relational_Knowledge_distillation'):
+        def Huber_loss(x,y):
+            with tf.variable_scope('Huber_loss'):
+                return tf.reduce_sum(tf.where(tf.less_equal(tf.abs(x-y), 1.), tf.square(x-y)/2,
+                                                   tf.abs(x-y)-1/2))
+            
+        def Distance_wise_potential(x):
+            with tf.variable_scope('DwP'):
+                x_square = tf.reduce_sum(tf.square(x),-1)
+                prod = tf.matmul(x,x,transpose_b=True)
+                distance = tf.sqrt(tf.maximum(tf.expand_dims(x_square,1)+tf.expand_dims(x_square,0) -2*prod, 1e-12))
+                mu = tf.reduce_sum(distance)/tf.reduce_sum(tf.where(distance > 0., tf.ones_like(distance), tf.zeros_like(distance)))
+                return distance/(mu+1e-8)
+            
+        def Angle_wise_potential(x):
+            with tf.variable_scope('AwP'):
+                e = tf.expand_dims(x,0)-tf.expand_dims(x,1)
+                e_norm = tf.nn.l2_normalize(e,2)
+            return tf.matmul(e_norm, e_norm,transpose_b=True)
+
+        source = tf.nn.l2_normalize(source)
+        target = tf.nn.l2_normalize(target)
+        distance_loss = Huber_loss(Distance_wise_potential(source),Distance_wise_potential(target))
+        angle_loss    = Huber_loss(   Angle_wise_potential(source),   Angle_wise_potential(target))
+        
+        return distance_loss*l[0]+angle_loss*l[1]
+    
+    
+    
+    
+    

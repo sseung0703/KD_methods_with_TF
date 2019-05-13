@@ -98,6 +98,8 @@ def ResNet(image, is_training=False, reuse = False, drop = False, Distill = None
                 end_points['Dist'] = Dist.KD_SVD(student_feats, teacher_feats)
             elif Distill == 'AB':
                 end_points['Dist'] = Dist.AB_distillation(student_feats, teacher_feats, 1., 1e-3)
+            elif Distill == 'RKD':
+                end_points['Dist'] = Dist.RKD(logits, logits_tch)
 
             tf.add_to_collection('dist', end_points['Dist'])
     return end_points

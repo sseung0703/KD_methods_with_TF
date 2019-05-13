@@ -20,7 +20,7 @@ def Optimizer_w_Distillation(class_loss, LR, epoch, init_epoch, global_step, Dis
             total_loss = class_loss*0.7 + tf.add_n(tf.losses.get_regularization_losses()) + tf.add_n(tf.get_collection('dist'))*0.3
             tf.summary.scalar('loss/total_loss', total_loss)
             gradients  = optimize.compute_gradients(total_loss, var_list = variables)
-        elif Distillation == 'AT':
+        elif Distillation == 'AT' or Distillation == 'RKD':
             # simple multi-task learning
             total_loss = class_loss + tf.add_n(tf.losses.get_regularization_losses()) + tf.add_n(tf.get_collection('dist'))
             tf.summary.scalar('loss/total_loss', total_loss)
