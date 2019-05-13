@@ -37,7 +37,7 @@ Fast optimization, network minimization, and transfer learning. CVPR 2017.](http
 ## Relational Knowledge
 Defined knowledge by intra-data relation
 - Relational Knowledge Distillation : they propose knowledge which contains not only feature information but also intra-data relation information.
-  - [Wonpyo Park, et. al. Relational Knowledge Distillation](https://arxiv.org/abs/1904.05068?context=cs.LG)
+  - [Wonpyo Park, et. al. Relational Knowledge Distillation. CVPR2019](https://arxiv.org/abs/1904.05068?context=cs.LG)
 
 # Experimental Results
 The below table and plot are sample results using [ResNet](http://openaccess.thecvf.com/content_cvpr_2016/html/He_Deep_Residual_Learning_CVPR_2016_paper.html).
