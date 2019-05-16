@@ -51,7 +51,7 @@ def ResNet(image, scope, is_training=False, reuse = False, drop = False, Distill
     
     nChannels = [32, 64, 128, 256]
     stride = [1,2,2]
-    n = 1
+    n = 1 if scope != 'Teacher' else 5
     with tf.variable_scope(scope):
         std = tf.contrib.layers.conv2d(image, nChannels[0], [3,3], 1, scope='conv0', trainable=is_training, reuse = reuse)
         std = tf.contrib.layers.batch_norm(std, scope='bn0', trainable = is_training, is_training=is_training, reuse = reuse)
