@@ -51,7 +51,7 @@ def Attention_transfer(student, teacher, beta = 1e3):
             return tf.reduce_mean(tf.square(Qt-Qs))*beta/2
     return tf.add_n([Attention(std, tch) for i, std, tch in zip(range(len(student)), student, teacher)])
   
-def FSP(students, teachers, weight = 1e-2):
+def FSP(students, teachers, weight = 1e-3):
     '''
     Junho Yim, Donggyu Joo, Jihoon Bae, and Junmo Kim.
     A gift from knowledge distillation: Fast optimization, network minimization and transfer learning. 

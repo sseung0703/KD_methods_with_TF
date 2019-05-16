@@ -31,11 +31,10 @@ def Optimizer_w_Distillation(class_loss, LR, epoch, init_epoch, global_step, Dis
             # in initialization phase, weight decay have to be turn-off which is not trained by distillation
             reg_loss = tf.add_n(tf.losses.get_regularization_losses())
             distillation_loss = tf.add_n(tf.get_collection('dist'))
-            transfer = tf.cond(epoch < init_epoch, lambda : 0., lambda : 1.)
-            
-            total_loss = class_loss*transfer + reg_loss + distillation_loss*(1-transfer)
+            cond = epoch < init_epoch
+            total_loss = tf.cond(cond, lambda : distillation_loss + reg_loss,
+                                       lambda : class_loss + reg_loss)
             tf.summary.scalar('loss/total_loss', total_loss)
-            tf.summary.scalar('loss/distillation_loss', distillation_loss)
             gradients  = optimize.compute_gradients(class_loss,             var_list = variables)
             gradient_wdecay = optimize.compute_gradients(reg_loss,          var_list = variables)
             gradient_dist   = optimize.compute_gradients(distillation_loss, var_list = variables)
@@ -44,9 +43,9 @@ def Optimizer_w_Distillation(class_loss, LR, epoch, init_epoch, global_step, Dis
                 for i, gc, gw, gd in zip(range(len(gradients)),gradients,gradient_wdecay,gradient_dist):
                     gw = 0. if gw[0] is None else gw[0]
                     if gd[0] != None:
-                        gradients[i] = (gc[0]*transfer + gw + gd[0]*(1-transfer), gc[1])
+                        gradients[i] = (tf.cond(cond, lambda : gw+gd[0], lambda : gw + gc[0]), gc[1])
                     else:
-                        gradients[i] = (gc[0]*transfer + gw*transfer, gc[1])
+                        gradients[i] = (tf.cond(cond, lambda : tf.zeros_like(gc[0]), lambda : gw + gc[0]), gc[1])
             
         elif Distillation == 'KD-SVD':
             # multi-task learning w/ distillation gradients clipping
