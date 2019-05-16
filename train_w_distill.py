@@ -3,15 +3,12 @@ import tensorflow as tf
 from tensorflow import ConfigProto
 from tensorflow.keras.datasets.cifar100 import load_data
 
-import time
+import time, os
 import scipy.io as sio
 import numpy as np
+from random import shuffle
 
 from nets import nets_factory
-
-from random import shuffle
-import os
-import scipy.io as sio
 import op_util
 
 home_path = os.path.dirname(os.path.abspath(__file__))
@@ -20,13 +17,17 @@ tf.app.flags.DEFINE_string('train_dir', 'test',
                            'Directory where checkpoints and event logs are written to.')
 tf.app.flags.DEFINE_string('Distillation', 'RKD',
                            'Distillation method : Soft_logits, FitNet, AT, FSP, KD-SVD, AB, RKD')
+tf.app.flags.DEFINE_string('teacher', 'ResNet32',
+                           'pretrained teacher`s weight')
+tf.app.flags.DEFINE_string('main_scope', 'Student',
+                           'networ`s scope')
 FLAGS = tf.app.flags.FLAGS
 def main(_):
     ### define path and hyper-parameter
     model_name   = 'ResNet'
     Learning_rate =1e-1# initialization methods : 1e-2, others : 1e-1
 
-    batch_size = 4
+    batch_size = 128
     val_batch_size = 200
     train_epoch = 0
     init_epoch = 40 if FLAGS.Distillation == 'FitNet' or FLAGS.Distillation == 'FSP' or FLAGS.Distillation == 'AB' else 0
@@ -62,7 +63,7 @@ def main(_):
         LR = learning_rate_scheduler(Learning_rate, [epoch, init_epoch, train_epoch], [0.3, 0.6, 0.8], 0.1)
         
         ## load Net
-        class_loss, train_accuracy = MODEL(model_name, weight_decay, image, label,
+        class_loss, train_accuracy = MODEL(model_name, FLAGS.main_scope, weight_decay, image, label,
                                            is_training = True, reuse = False, drop = True, Distillation = FLAGS.Distillation)
         
         #make training operator
@@ -76,7 +77,7 @@ def main(_):
         val_label = tf.placeholder(tf.int32, [val_batch_size])
         val_label_onhot = tf.contrib.layers.one_hot_encoding(val_label, 100,on_value=1.0)
         val_image_ = pre_processing(val_image, is_training = False)
-        val_loss, val_accuracy = MODEL(model_name, 0., val_image_, val_label_onhot,
+        val_loss, val_accuracy = MODEL(model_name, FLAGS.main_scope, 0., val_image_, val_label_onhot,
                                        is_training = False, reuse = True, drop = False, Distillation = FLAGS.Distillation)
         
         ## make placeholder and summary op for training and validation results
@@ -103,7 +104,7 @@ def main(_):
                 ## if Distillation is True, load and assign teacher's variables
                 ## this mechanism is slower but easier to modifier than load checkpoint
                 global_variables  = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES)
-                p = sio.loadmat(home_path + '/pre_trained/ResNet32.mat')
+                p = sio.loadmat(home_path + '/pre_trained/%s.mat' %FLAGS.teacher)
                 n = 0
                 for v in global_variables:
                     if p.get(v.name[:-2]) is not None:
@@ -198,9 +199,9 @@ def main(_):
             train_writer.add_session_log(tf.SessionLog(status=tf.SessionLog.STOP))
             train_writer.close()
 
-def MODEL(model_name, weight_decay, image, label, is_training, reuse, drop, Distillation):
+def MODEL(model_name, scope, weight_decay, image, label, is_training, reuse, drop, Distillation):
     network_fn = nets_factory.get_network_fn(model_name, weight_decay = weight_decay)
-    end_points = network_fn(image, is_training=is_training, reuse=reuse, drop = drop, Distill=Distillation)
+    end_points = network_fn(image, scope, is_training=is_training, reuse=reuse, drop = drop, Distill=Distillation)
 
     loss = tf.losses.softmax_cross_entropy(label,end_points['Logits'])
     accuracy = tf.contrib.metrics.accuracy(tf.to_int32(tf.argmax(end_points['Logits'], 1)), tf.to_int32(tf.argmax(label, 1)))

@@ -19,9 +19,9 @@ def get_network_fn(name, weight_decay=5e-4):
     arg_scope = arg_scopes_map[name](weight_decay=weight_decay)
     func = networks_map[name]
     @functools.wraps(func)
-    def network_fn(images, is_training, reuse, drop, Distill):
+    def network_fn(images, scope, is_training, reuse, drop, Distill):
         with tf.contrib.framework.arg_scope(arg_scope):
-            return func(images, is_training=is_training, reuse = reuse, drop = drop, Distill=Distill)
+            return func(images, scope = scope, is_training=is_training, reuse = reuse, drop = drop, Distill=Distill)
     if hasattr(func, 'default_image_size'):
         network_fn.default_image_size = func.default_image_size
 
