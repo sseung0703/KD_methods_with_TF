@@ -1,12 +1,12 @@
 # Knowledge Distillation Methods with Tensorflow
-(Sadly, my English skill is terribly low!! so please get patient to read my mess of words. :) )
-
 Knowledge distillation is the method to enhance student network by teacher knowledge.
 So annually knowledge distillation methods have been proposed but each paper's do experiments with different networks and compare with different methods.
 And each method is implemented by each author, so if a new researcher wants to study knowledge distillation, they have to find or implement all of the methods. Surely it is very hard work.
 To reduce this burden, I publish some code that is modified from my research codes.
 I'll update the code and knowledge distillation algorithm, and all of the things will be implemented by Tensorflow.
-Now this repository is not so perfect but I will be improved, so please give some advice to be. (especially English.. :D)
+
+If you want something a new method, please notice to me :)
+
 
 # Implemented Knowledge Distillation Methods
 below methods are implemented and base on insight with [TAKD](https://arxiv.org/abs/1902.03393), I make each category. I think they are meaningful categories, but if you think it has problems please notice for me :)
@@ -52,16 +52,18 @@ The teacher network is ResNet32 and Student is ResNet8, and the student network 
 ## Training/Validation plots
 
 Methods | Last Accuracy | Best Accuracy
------------- | ------------- | -------------
+------------| ------------- | -------------
 Student     | 71.76 | 71.92 
 Teacher     | 78.96 | 79.08 
 Soft-logits | 71.79 | 72.08 
-FitNet        | 72.74 | 72.96
-AT           | 72.31 | 72.60
-FSP          | 71.56 | 71.70
-KD-SVD    | 73.68 | 73.78
-AB            | 72.80 |73.10
-RKD          | 73.40 | 73.48
+FitNet      | 72.74 | 72.96
+AT          | 72.31 | 72.60
+FSP         | 72.65 | 72.91
+KD-SVD      | 73.68 | 73.78
+AB          | 72.80 | 73.10
+RKD         | 73.40 | 73.48
 
 <img src="plots.png" width="600">
 
+# Plan to do
+- Tutorial code with Google Colab.
