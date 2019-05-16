@@ -29,7 +29,7 @@ def main(_):
 
     batch_size = 128
     val_batch_size = 200
-    train_epoch = 0
+    train_epoch = 100
     init_epoch = 40 if FLAGS.Distillation == 'FitNet' or FLAGS.Distillation == 'FSP' or FLAGS.Distillation == 'AB' else 0
     
     total_epoch = init_epoch + train_epoch
