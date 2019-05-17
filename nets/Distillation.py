@@ -104,8 +104,6 @@ def KD_SVD(student_feature_maps, teacher_feature_maps, decom_type = 'EID'):
                     B, D,_ = V_S.get_shape().as_list()
                     V_S, U_S, V_T = SVP.Align_rsv(V_S, V_T, U_S, Sigma_T, K)
                     
-                    Sigma_T, U_T, V_T = SVP.SVD_eid(tfm, K, name = 'TSVD%d'%i)
-                
             if i > 0:
                 with tf.variable_scope('RBF%d'%i):    
                     S_rbf = tf.exp(-tf.square(tf.expand_dims(V_S,2)-tf.expand_dims(V_Sb,1))/8)
