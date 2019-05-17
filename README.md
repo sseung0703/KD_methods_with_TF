@@ -66,4 +66,4 @@ RKD         | 73.40 | 73.48
 <img src="plots.png" width="600">
 
 # Plan to do
-- Tutorial code with Google Colab.
+- 
