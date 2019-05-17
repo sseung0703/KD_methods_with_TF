@@ -150,8 +150,8 @@ def RKD(source, target, l = [1e2,2e2]):
     with tf.variable_scope('Relational_Knowledge_distillation'):
         def Huber_loss(x,y):
             with tf.variable_scope('Huber_loss'):
-                return tf.reduce_sum(tf.where(tf.less_equal(tf.abs(x-y), 1.), tf.square(x-y)/2,
-                                                   tf.abs(x-y)-1/2))
+                return tf.reduce_mean(tf.where(tf.less_equal(tf.abs(x-y), 1.), 
+                                               tf.square(x-y)/2,tf.abs(x-y)-1/2))
             
         def Distance_wise_potential(x):
             with tf.variable_scope('DwP'):
@@ -167,8 +167,8 @@ def RKD(source, target, l = [1e2,2e2]):
                 e_norm = tf.nn.l2_normalize(e,2)
             return tf.matmul(e_norm, e_norm,transpose_b=True)
 
-        source = tf.nn.l2_normalize(source)
-        target = tf.nn.l2_normalize(target)
+        source = tf.nn.l2_normalize(source,1)
+        target = tf.nn.l2_normalize(target,1)
         distance_loss = Huber_loss(Distance_wise_potential(source),Distance_wise_potential(target))
         angle_loss    = Huber_loss(   Angle_wise_potential(source),   Angle_wise_potential(target))
         
