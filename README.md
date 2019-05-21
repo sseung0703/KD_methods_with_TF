@@ -13,16 +13,19 @@ below methods are implemented and base on insight with [TAKD](https://arxiv.org/
 
 ## Response-based Knowledge
 Defined knowledge by the neural response of the hidden layer or the output layer of the network
-- Soft-logit : The first knowledge distillation method for deep neural network. Knowledge is defined by softened logits.
+- Soft-logit : The first knowledge distillation method for deep neural network. Knowledge is defined by softened logits. Because it is easy to handle it, many applied methods were proposed using it such as semi-supervised learning, defencing adversarial attack and so on.
   - [Geoffrey Hinton, et al. Distilling the knowledge in a neural network. arXiv:1503.02531, 2015.](https://arxiv.org/abs/1503.02531)
 
 ## Multi-connection Knowledge
 Increases knowledge by sensing several points of the teacher network
-- FitNet : To increase amounts of information, knowledge is defined by multi-connected networks and compared feature maps by L2-distance
+- FitNet : To increase amounts of information, knowledge is defined by multi-connected networks and compared feature maps by L2-distance.
   - [Adriana Romero, et al. Fitnets: Hints for thin deep nets. arXiv preprint arXiv:1412.6550, 2014.](https://arxiv.org/abs/1412.6550)
   
 - Attention transfer (AT) : Knowledge is defined by attention map which is L2-norm of each feature point.
   - [Zagoruyko, Sergey et. al. Paying more attention to attention: Improving the performance of convolutional neural networks via attention transfer. arXiv preprint arXiv:1612.03928, 2016.](https://arxiv.org/pdf/1612.03928.pdf)
+  
+- Jacobian Matching (JB) (In process): They combine attention matching loss and Jacobian matching loss.
+  -[Suraj Srinivas, Francois Fleuret. Knowledge Transfer with Jacobian Matching. arXiv preprint arXiv:1803.00443, 2018.](https://arxiv.org/pdf/1803.00443.pdf)
 - Activation boundary (AB) : To soften teacher network's constraint, they propose the new metric function inspired by hinge loss which usually used for SVM.
   - [Byeongho Heo, et. al. Knowledge transfer via distillation of activation boundaries formed by hidden neurons. AAAI2019](https://arxiv.org/abs/1811.03233)
 
@@ -66,4 +69,5 @@ RKD         | 73.40 | 73.48
 <img src="plots.png" width="600">
 
 # Plan to do
-- 
+- Improve short explanation of each category and method.
+- Implement the Jacobian matching
