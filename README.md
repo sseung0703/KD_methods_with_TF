@@ -69,5 +69,4 @@ RKD         | 73.40 | 73.48
 <img src="plots.png" width="600">
 
 # Plan to do
-- Improve short explanation of each category and method.
 - Implement the Jacobian matching
