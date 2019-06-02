@@ -5,10 +5,11 @@ from nets import SVP
 def Soft_logits(student, teacher, T = 2):
     '''
     Geoffrey Hinton, Oriol Vinyals, and Jeff Dean.  
-    Distilling the knowledge in a neural network. arXiv preprint arXiv:1503.02531, 2015.
+    Distilling the knowledge in a neural network.
+    arXiv preprint arXiv:1503.02531, 2015.
     '''
     with tf.variable_scope('KD'):
-        return tf.reduce_sum( tf.nn.softmax(teacher/T)*(tf.nn.log_softmax(teacher/T)-tf.nn.log_softmax(student/T)) )/student.get_shape().as_list()[0]
+        return tf.reduce_mean(tf.reduce_sum( tf.nn.softmax(teacher/T)*(tf.nn.log_softmax(teacher/T)-tf.nn.log_softmax(student/T)),1 ))
 
 def FitNet(student, teacher):
     '''
@@ -24,9 +25,8 @@ def FitNet(student, teacher):
                 with tf.variable_scope('Map'):
                     target = tf.contrib.layers.fully_connected(target, Ds, biases_initializer = None, trainable=True, scope = 'fc')
             
-            return tf.reduce_sum(tf.square(source-target))
-    B = student[0].get_shape().as_list()[0]
-    return tf.add_n([Guided(std, tch) for i, std, tch in zip(range(len(student)), student, teacher)])/B
+            return tf.reduce_mean(tf.reduce_sum(tf.square(source-target),[1,2,3]))
+    return tf.add_n([Guided(std, tch) for i, std, tch in zip(range(len(student)), student, teacher)])
 
 def Attention_transfer(student, teacher, beta = 1e3):
     '''
@@ -42,11 +42,11 @@ def Attention_transfer(student, teacher, beta = 1e3):
                 with tf.variable_scope('Map'):
                     source = tf.contrib.layers.fully_connected(source, Ds, biases_initializer = None, trainable=True, scope = 'fc')
             
-            Qt = tf.reshape(tf.reduce_mean(tf.square(source),-1),[B,-1])
-            Qt /= tf.sqrt(tf.reduce_sum(tf.square(Qt),1,keepdims=True))
+            Qt = tf.contrib.layers.flatten(tf.reduce_mean(tf.square(source),-1))
+            Qt = tf.nn.l2_normalize(Qt, [1,2])
             
-            Qs = tf.reshape(tf.reduce_mean(tf.square(target),-1),[B,-1])
-            Qs /= tf.sqrt(tf.reduce_sum(tf.square(Qs),1,keepdims=True))
+            Qs = tf.contrib.layers.flatten(tf.reduce_mean(tf.square(target),-1))
+            Qs = tf.nn.l2_normalize(Qs, [1,2])
             
             return tf.reduce_mean(tf.square(Qt-Qs))*beta/2
     return tf.add_n([Attention(std, tch) for i, std, tch in zip(range(len(student)), student, teacher)])
@@ -79,11 +79,21 @@ def FSP(students, teachers, weight = 1e-3):
             Dist_loss.append(tf.reduce_mean(tf.reduce_sum(tf.square(tf.stop_gradient(gt0)-gs0),[1,2])/2 ))
 
         return tf.add_n(Dist_loss)*weight
-
+    
+def DML(student, teacher):
+    '''
+    Ying Zhang, Tao Xiang, Timothy M. Hospedales, Huchuan Lu.
+    Deep mutual learning.
+    IEEE Conference on Computer Vision and Pattern Recognition. 2018.
+    '''
+    with tf.variable_scope('KD'):
+        return (tf.reduce_mean(tf.reduce_sum(tf.nn.softmax(teacher)*(tf.nn.log_softmax(teacher)-tf.nn.log_softmax(student)),1)) +
+                tf.reduce_mean(tf.reduce_sum(tf.nn.softmax(student)*(tf.nn.log_softmax(student)-tf.nn.log_softmax(teacher)),1)))/2
+    
 def KD_SVD(student_feature_maps, teacher_feature_maps, decom_type = 'EID'):
     '''
     Seung Hyun Lee, Dae Ha Kim, and Byung Cheol Song.
-    Self-supervised knowledge distillation using singular value decomposition. In
+    Self-supervised knowledge distillation using singular value decomposition.
     European Conference on ComputerVision, pages 339–354. Springer, 2018.
     '''
     with tf.variable_scope('Distillation'):
@@ -118,7 +128,7 @@ def KD_SVD(student_feature_maps, teacher_feature_maps, decom_type = 'EID'):
         transfer_loss =  tf.add_n(GNN_losses)
 
         return transfer_loss
-      
+
 def AB_distillation(student, teacher, margin=1., weight = 1e-3):
     '''
     Byeongho Heo,  Minsik Lee,  Sangdoo Yun,  and Jin Young Choi.   
@@ -136,9 +146,8 @@ def AB_distillation(student, teacher, margin=1., weight = 1e-3):
             
             loss = tf.square(source + margin) * tf.cast(tf.logical_and(source > -margin, target <= 0.), tf.float32)\
                   +tf.square(source - margin) * tf.cast(tf.logical_and(source <= margin, target >  0.), tf.float32)
-            return tf.reduce_sum(tf.abs(loss))
-    B = student[0].get_shape().as_list()[0]
-    return tf.add_n([criterion_alternative_L2(std, tch, margin)/B/2**(-i)
+            return tf.reduce_mean(tf.reduce_sum(tf.abs(loss),[1,2,3]))
+    return tf.add_n([criterion_alternative_L2(std, tch, margin)/2**(-i)
                     for i, std, tch in zip(range(len(student)), student, teacher)])*weight
     
 def RKD(source, target, l = [1e2,2e2]):
@@ -151,7 +160,7 @@ def RKD(source, target, l = [1e2,2e2]):
         def Huber_loss(x,y):
             with tf.variable_scope('Huber_loss'):
                 return tf.reduce_mean(tf.where(tf.less_equal(tf.abs(x-y), 1.), 
-                                               tf.square(x-y)/2,tf.abs(x-y)-1/2))
+                                               tf.square(x-y)/2, tf.abs(x-y)-1/2))
             
         def Distance_wise_potential(x):
             with tf.variable_scope('DwP'):
@@ -173,8 +182,4 @@ def RKD(source, target, l = [1e2,2e2]):
         angle_loss    = Huber_loss(   Angle_wise_potential(source),   Angle_wise_potential(target))
         
         return distance_loss*l[0]+angle_loss*l[1]
-    
-    
-    
-    
     

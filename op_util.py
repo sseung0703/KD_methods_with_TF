@@ -6,6 +6,8 @@ def Optimizer_w_Distillation(class_loss, LR, epoch, init_epoch, global_step, Dis
         # get variables and update operations
         variables  = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+        teacher_variables = tf.get_collection('Teacher')
+        variables = list(set(variables)-set(teacher_variables))
         
         # make optimizer w/ learning rate scheduler
         optimize = tf.train.MomentumOptimizer(LR, 0.9, use_nesterov=True)
@@ -17,12 +19,12 @@ def Optimizer_w_Distillation(class_loss, LR, epoch, init_epoch, global_step, Dis
             
         elif Distillation == 'Soft_logits':
             # multi-task learning with alpha
-            total_loss = class_loss*0.7 + tf.add_n(tf.losses.get_regularization_losses()) + tf.add_n(tf.get_collection('dist'))*0.3
+            total_loss = class_loss*0.7 + tf.add_n(tf.losses.get_regularization_losses()) + tf.get_collection('dist')[0]*0.3
             tf.summary.scalar('loss/total_loss', total_loss)
             gradients  = optimize.compute_gradients(total_loss, var_list = variables)
         elif Distillation == 'AT' or Distillation == 'RKD':
             # simple multi-task learning
-            total_loss = class_loss + tf.add_n(tf.losses.get_regularization_losses()) + tf.add_n(tf.get_collection('dist'))
+            total_loss = class_loss + tf.add_n(tf.losses.get_regularization_losses()) + tf.get_collection('dist')[0]
             tf.summary.scalar('loss/total_loss', total_loss)
             gradients  = optimize.compute_gradients(total_loss, var_list = variables)
             
@@ -30,7 +32,7 @@ def Optimizer_w_Distillation(class_loss, LR, epoch, init_epoch, global_step, Dis
             # initialization and fine-tuning
             # in initialization phase, weight decay have to be turn-off which is not trained by distillation
             reg_loss = tf.add_n(tf.losses.get_regularization_losses())
-            distillation_loss = tf.add_n(tf.get_collection('dist'))
+            distillation_loss = tf.get_collection('dist')[0]
             cond = epoch < init_epoch
             total_loss = tf.cond(cond, lambda : distillation_loss + reg_loss,
                                        lambda : class_loss + reg_loss)
@@ -57,7 +59,7 @@ def Optimizer_w_Distillation(class_loss, LR, epoch, init_epoch, global_step, Dis
                 return s
             
             reg_loss = tf.add_n(tf.losses.get_regularization_losses())
-            distillation_loss = tf.add_n(tf.get_collection('dist'))
+            distillation_loss = tf.get_collection('dist')[0]
             
             total_loss = class_loss + reg_loss + distillation_loss
             tf.summary.scalar('loss/total_loss', total_loss)
