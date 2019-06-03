@@ -129,25 +129,24 @@ def KD_SVD(student_feature_maps, teacher_feature_maps, decom_type = 'EID'):
 
         return transfer_loss
 
-def AB_distillation(student, teacher, margin=1., weight = 1e-3):
+def AB_distillation(student, teacher, margin=1., weight = 3e-3):
     '''
     Byeongho Heo,  Minsik Lee,  Sangdoo Yun,  and Jin Young Choi.   
     Knowledge transfer via distillation of activation boundaries formed by hidden neurons.
     arXiv preprint arXiv:1811.03233, 2018.
     '''
-    def criterion_alternative_L2(source, target, margin):
+    def criterion_alternative_L2(source, target, margin, num):
         with tf.variable_scope('criterion_alternative_L2'):
             Ds = source.get_shape().as_list()[-1]
             Dt = target.get_shape().as_list()[-1]
-            if Ds != Dt:
-                with tf.variable_scope('Map'):
-                    target = tf.contrib.layers.fully_connected(target, Ds, biases_initializer = None, trainable=True, scope = 'fc')
-                    target = tf.contrib.layers.batch_norm(target,scope='bn',is_training=True, trainable = True, activation_fn = None)
+            with tf.variable_scope('Map'):
+                source = tf.contrib.layers.conv2d(source, Dt, [1, 1], biases_initializer = None, trainable=True, scope = 'connector%d' % (num))
+                source = tf.contrib.layers.batch_norm(source, scope='connector_bn%d' % (num), is_training=True, trainable = True, activation_fn = None)
             
             loss = tf.square(source + margin) * tf.cast(tf.logical_and(source > -margin, target <= 0.), tf.float32)\
-                  +tf.square(source - margin) * tf.cast(tf.logical_and(source <= margin, target >  0.), tf.float32)
+                  +tf.square(source - margin) * tf.cast(tf.logical_and(source <= margin, target > 0.), tf.float32)
             return tf.reduce_mean(tf.reduce_sum(tf.abs(loss),[1,2,3]))
-    return tf.add_n([criterion_alternative_L2(std, tch, margin)/2**(-i)
+    return tf.add_n([criterion_alternative_L2(std, tch, margin, i)/2**(-i)
                     for i, std, tch in zip(range(len(student)), student, teacher)])*weight
     
 def RKD(source, target, l = [1e2,2e2]):

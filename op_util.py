@@ -28,7 +28,7 @@ def Optimizer_w_Distillation(class_loss, LR, epoch, init_epoch, global_step, Dis
             tf.summary.scalar('loss/total_loss', total_loss)
             gradients  = optimize.compute_gradients(total_loss, var_list = variables)
             
-        elif Distillation == 'FitNet' or Distillation == 'FSP' or Distillation == 'AB':
+        elif Distillation == 'FitNet' or Distillation == 'FSP':
             # initialization and fine-tuning
             # in initialization phase, weight decay have to be turn-off which is not trained by distillation
             reg_loss = tf.add_n(tf.losses.get_regularization_losses())
@@ -48,7 +48,32 @@ def Optimizer_w_Distillation(class_loss, LR, epoch, init_epoch, global_step, Dis
                         gradients[i] = (tf.cond(cond, lambda : gw+gd[0], lambda : gw + gc[0]), gc[1])
                     else:
                         gradients[i] = (tf.cond(cond, lambda : tf.zeros_like(gc[0]), lambda : gw + gc[0]), gc[1])
-            
+
+        elif Distillation == 'AB':
+            # initialization and fine-tuning
+            # in initialization phase, weight decay have to be turn-off which is not trained by distillation
+            reg_loss = tf.add_n(tf.losses.get_regularization_losses())
+            distillation_loss = tf.get_collection('dist')[0]
+            KD_loss = tf.get_collection('Logits_KD')[0]
+            cond = epoch < init_epoch
+            total_loss = tf.cond(cond, lambda: distillation_loss + reg_loss,
+                                 lambda: KD_loss + reg_loss)
+            tf.summary.scalar('loss/total_loss', total_loss)
+            gradients = optimize.compute_gradients(KD_loss, var_list=variables)
+            gradient_wdecay = optimize.compute_gradients(reg_loss, var_list=variables)
+            gradient_dist = optimize.compute_gradients(distillation_loss, var_list=variables)
+
+            with tf.variable_scope('clip_grad'):
+                for i, gc, gw, gd in zip(range(len(gradients)), gradients, gradient_wdecay, gradient_dist):
+                    gw = 0. if gw[0] is None else gw[0]
+                    if gd[0] is None:
+                        gradients[i] = (tf.cond(cond, lambda: tf.zeros_like(gc[0]), lambda: gw + gc[0]), gc[1])
+                    elif gc[0] is None:
+                        gradients[i] = (tf.cond(cond, lambda: gw + gd[0], lambda: tf.zeros_like(gd[0])), gd[1])
+                    else:
+                        gradients[i] = (tf.cond(cond, lambda: gw + gd[0], lambda: gw + gc[0]), gc[1])
+            # gradients = optimize.compute_gradients(total_loss, var_list=variables)
+
         elif Distillation == 'KD-SVD':
             # multi-task learning w/ distillation gradients clipping
             # distillation gradients are clipped by norm of main-task gradients
