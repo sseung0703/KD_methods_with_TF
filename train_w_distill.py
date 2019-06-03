@@ -15,7 +15,7 @@ home_path = os.path.dirname(os.path.abspath(__file__))
 
 tf.app.flags.DEFINE_string('train_dir', 'test',
                            'Directory where checkpoints and event logs are written to.')
-tf.app.flags.DEFINE_string('Distillation', 'AB',
+tf.app.flags.DEFINE_string('Distillation', 'DML',
                            'Distillation method : Soft_logits, FitNet, AT, FSP, DML, KD-SVD, AB, RKD')
 tf.app.flags.DEFINE_string('teacher', 'ResNet32',
                            'pretrained teacher`s weight')
