@@ -73,7 +73,7 @@ def Optimizer_w_Distillation(class_loss, LR, epoch, init_epoch, global_step, Dis
                     else:
                         gradients[i] = (tf.cond(cond, lambda: gw + gd[0], lambda: gw + gc[0]), gc[1])
 
-        elif Distillation == 'KD-SVD':
+        elif Distillation == 'KD-SVD' or Distillation == 'KD-EID':
             # multi-task learning w/ distillation gradients clipping
             # distillation gradients are clipped by norm of main-task gradients
             def sigmoid(x, k, d = 1):

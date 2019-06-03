@@ -67,7 +67,6 @@ def ResNet(image, scope, is_training, reuse = False, drop = False, Distill = Non
     
     if Distill is not None:
         if Distill == 'DML':
-#            is_training = tf.logical_not(is_training)
             teacher_train = True
             weight_decay = 5e-4
         elif Distill == 'AB':
@@ -117,7 +116,9 @@ def ResNet(image, scope, is_training, reuse = False, drop = False, Distill = Non
             elif Distill == 'FSP':
                 end_points['Dist'] = Dist.FSP(student_feats, teacher_feats)
             elif Distill == 'KD-SVD':
-                end_points['Dist'] = Dist.KD_SVD(student_feats, teacher_feats)
+                end_points['Dist'] = Dist.KD_SVD(student_feats, teacher_feats,'SVD')
+            elif Distill == 'KD-EID':
+                end_points['Dist'] = Dist.KD_SVD(student_feats, teacher_feats, 'EID')
             elif Distill == 'DML':
                 end_points['Dist'] = Dist.DML(logits, logits_tch)
             elif Distill == 'AB':

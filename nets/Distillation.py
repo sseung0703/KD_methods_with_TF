@@ -90,10 +90,10 @@ def DML(student, teacher):
         return (tf.reduce_mean(tf.reduce_sum(tf.nn.softmax(teacher)*(tf.nn.log_softmax(teacher)-tf.nn.log_softmax(student)),1)) +
                 tf.reduce_mean(tf.reduce_sum(tf.nn.softmax(student)*(tf.nn.log_softmax(student)-tf.nn.log_softmax(teacher)),1)))/2
     
-def KD_SVD(student_feature_maps, teacher_feature_maps, decom_type = 'EID'):
+def KD_SVD(student_feature_maps, teacher_feature_maps, dist_type = 'SVD'):
     '''
     Seung Hyun Lee, Dae Ha Kim, and Byung Cheol Song.
-    Self-supervised knowledge distillation using singular value decomposition.
+    Self-supervised knowledge distillation using singular value decomposition. In
     European Conference on ComputerVision, pages 339–354. Springer, 2018.
     '''
     with tf.variable_scope('Distillation'):
@@ -102,18 +102,22 @@ def KD_SVD(student_feature_maps, teacher_feature_maps, decom_type = 'EID'):
         V_Tb = V_Sb = None
         for i, sfm, tfm in zip(range(len(student_feature_maps)), student_feature_maps, teacher_feature_maps):
             with tf.variable_scope('Compress_feature_map%d'%i):
-                if decom_type == 'SVD':
+                if dist_type == 'SVD':
                     Sigma_T, U_T, V_T = SVP.SVD(tfm, K, name = 'TSVD%d'%i)
                     Sigma_S, U_S, V_S = SVP.SVD(sfm, K, name = 'SSVD%d'%i)
                     B, D,_ = V_S.get_shape().as_list()
-                    V_S, U_S, V_T = SVP.Align_rsv(V_S, V_T, U_S, Sigma_T, K)
+                    V_S, V_T = SVP.Align_rsv(V_S, V_T)
                     
-                elif decom_type == 'EID':
+                elif dist_type == 'EID':
                     Sigma_T, U_T, V_T = SVP.SVD_eid(tfm, K, name = 'TSVD%d'%i)
                     Sigma_S, U_S, V_S = SVP.SVD_eid(sfm, K, name = 'SSVD%d'%i)
                     B, D,_ = V_S.get_shape().as_list()
-                    V_S, U_S, V_T = SVP.Align_rsv(V_S, V_T, U_S, Sigma_T, K)
+                    V_S, V_T = SVP.Align_rsv(V_S, V_T)
                     
+                Sigma_T = tf.expand_dims(Sigma_T,1)
+                V_T *= Sigma_T
+                V_S *= Sigma_T
+                
             if i > 0:
                 with tf.variable_scope('RBF%d'%i):    
                     S_rbf = tf.exp(-tf.square(tf.expand_dims(V_S,2)-tf.expand_dims(V_Sb,1))/8)
