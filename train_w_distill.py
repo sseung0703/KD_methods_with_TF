@@ -25,7 +25,7 @@ FLAGS = tf.app.flags.FLAGS
 def main(_):
     ### define path and hyper-parameter
     model_name   = 'ResNet'
-    Learning_rate =1e-1# initialization methods : 1e-2, others : 1e-1
+    Learning_rate =1e-1
 
     batch_size = 128
     val_batch_size = 200
