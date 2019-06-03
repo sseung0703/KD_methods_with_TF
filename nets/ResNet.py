@@ -70,6 +70,10 @@ def ResNet(image, scope, is_training, reuse = False, drop = False, Distill = Non
 #            is_training = tf.logical_not(is_training)
             teacher_train = True
             weight_decay = 5e-4
+        elif Distill == 'AB':
+            is_training = True
+            teacher_train = False
+            weight_decay = 0.
         else:
             is_training = False
             teacher_train = False
@@ -102,7 +106,8 @@ def ResNet(image, scope, is_training, reuse = False, drop = False, Distill = Non
             feats_noact = tf.get_collection('feat_noact')
             student_feats_noact = feats[:len(feats_noact)//2]
             teacher_feats_noact = feats[len(feats_noact)//2:]
-            
+
+            end_points['Logits_KD'] = Dist.Soft_logits(logits, logits_tch, 3)
             if Distill == 'Soft_logits':
                 end_points['Dist'] = Dist.Soft_logits(logits, logits_tch, 3)
             elif Distill == 'FitNet':
@@ -115,12 +120,12 @@ def ResNet(image, scope, is_training, reuse = False, drop = False, Distill = Non
                 end_points['Dist'] = Dist.KD_SVD(student_feats, teacher_feats)
             elif Distill == 'DML':
                 end_points['Dist'] = Dist.DML(logits, logits_tch)
-                
             elif Distill == 'AB':
                 end_points['Dist'] = Dist.AB_distillation(student_feats_noact, teacher_feats_noact, 1., 1e-3)
             elif Distill == 'RKD':
                 end_points['Dist'] = Dist.RKD(logits, logits_tch)
 
             tf.add_to_collection('dist', end_points['Dist'])
+            tf.add_to_collection('Logits_KD', end_points['Logits_KD'])
     return end_points
 
