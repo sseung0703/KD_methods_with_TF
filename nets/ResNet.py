@@ -46,19 +46,20 @@ def NetworkBlock(x, nb_layers, depth, stride, is_training = False, reuse = False
                          is_training = is_training, reuse = reuse, name = 'BasicBlock%d'%i)
         return x
 
-def ResNet(image, scope, is_training, reuse = False, drop = False, Distill = None):
+def ResNet(image, label, scope, is_training, reuse = False, drop = False, Distill = None):
     end_points = {}
     
     nChannels = [32, 64, 128, 256]
     stride = [1,2,2]
+        
     n = 1 if scope != 'Teacher' else 5
     with tf.variable_scope(scope):
         std = tf.contrib.layers.conv2d(image, nChannels[0], [3,3], 1, scope='conv0', trainable=True, reuse = reuse)
         std = tf.contrib.layers.batch_norm(std, scope='bn0', trainable = True, is_training=is_training, reuse = reuse)
-        for i in range(3):            
+        for i in range(len(stride)):            
             std = NetworkBlock(std, n, nChannels[1+i], stride[i], is_training = is_training, reuse = reuse, name = 'Resblock%d'%i)
         fc = tf.reduce_mean(std, [1,2])
-        logits = tf.contrib.layers.fully_connected(fc , 100,
+        logits = tf.contrib.layers.fully_connected(fc , label.get_shape().as_list()[-1],
                                       weights_initializer = tf.contrib.layers.variance_scaling_initializer(factor=1.0),
                                       biases_initializer = tf.zeros_initializer(),
                                       biases_regularizer = tf.contrib.layers.l2_regularizer(5e-4),
@@ -69,10 +70,6 @@ def ResNet(image, scope, is_training, reuse = False, drop = False, Distill = Non
         if Distill == 'DML':
             teacher_train = True
             weight_decay = 5e-4
-        elif Distill == 'AB':
-            is_training = True
-            teacher_train = False
-            weight_decay = 0.
         else:
             is_training = False
             teacher_train = False
@@ -88,10 +85,10 @@ def ResNet(image, scope, is_training, reuse = False, drop = False, Distill = Non
                     n = 5
                     tch = tf.contrib.layers.conv2d(image, nChannels[0], [3,3], 1, scope='conv0', trainable=teacher_train, reuse = reuse)
                     tch = tf.contrib.layers.batch_norm(tch, scope='bn0', trainable = teacher_train, is_training=is_training, reuse = reuse)
-                    for i in range(3):            
+                    for i in range(len(stride)):            
                         tch = NetworkBlock(tch, n, nChannels[1+i], stride[i], is_training = is_training, reuse = reuse, name = 'Resblock%d'%i)
                     fc = tf.reduce_mean(tch, [1,2])
-                    logits_tch = tf.contrib.layers.fully_connected(fc , 100,
+                    logits_tch = tf.contrib.layers.fully_connected(fc , label.get_shape().as_list()[-1],
                                                                    weights_initializer = tf.contrib.layers.variance_scaling_initializer(factor=1.0),
                                                                    biases_initializer = tf.zeros_initializer(),
                                                                    biases_regularizer = tf.contrib.layers.l2_regularizer(5e-4),
@@ -105,28 +102,26 @@ def ResNet(image, scope, is_training, reuse = False, drop = False, Distill = Non
             feats_noact = tf.get_collection('feat_noact')
             student_feats_noact = feats[:len(feats_noact)//2]
             teacher_feats_noact = feats[len(feats_noact)//2:]
-
-            end_points['Logits_KD'] = Dist.Soft_logits(logits, logits_tch, 3)
+            
             if Distill == 'Soft_logits':
-                end_points['Dist'] = Dist.Soft_logits(logits, logits_tch, 3)
+                tf.add_to_collection('dist', Dist.Soft_logits(logits, logits_tch, 3))
             elif Distill == 'FitNet':
-                end_points['Dist'] = Dist.FitNet(student_feats, teacher_feats)
+                tf.add_to_collection('dist', Dist.FitNet(student_feats, teacher_feats))
             elif Distill == 'AT':
-                end_points['Dist'] = Dist.Attention_transfer(student_feats_noact, teacher_feats_noact)
+                tf.add_to_collection('dist', Dist.Attention_transfer(student_feats_noact, teacher_feats_noact))
             elif Distill == 'FSP':
-                end_points['Dist'] = Dist.FSP(student_feats, teacher_feats)
-            elif Distill == 'KD-SVD':
-                end_points['Dist'] = Dist.KD_SVD(student_feats, teacher_feats,'SVD')
-            elif Distill == 'KD-EID':
-                end_points['Dist'] = Dist.KD_SVD(student_feats, teacher_feats, 'EID')
+                tf.add_to_collection('dist', Dist.FSP(student_feats, teacher_feats))
             elif Distill == 'DML':
-                end_points['Dist'] = Dist.DML(logits, logits_tch)
+                tf.add_to_collection('dist', Dist.DML(logits, logits_tch))
+            elif Distill == 'KD-SVD':
+                tf.add_to_collection('dist', Dist.KD_SVD(student_feats, teacher_feats, 'SVD'))
+            elif Distill == 'KD-EID':
+                tf.add_to_collection('dist', Dist.KD_SVD(student_feats, teacher_feats, 'EID'))
             elif Distill == 'AB':
-                end_points['Dist'] = Dist.AB_distillation(student_feats_noact, teacher_feats_noact, 1., 1e-3)
+                tf.add_to_collection('dist', Dist.AB_distillation(student_feats_noact, teacher_feats_noact, 1., 3e-3))
+                tf.add_to_collection('dist', Dist.Soft_logits(logits, logits_tch, 3))
             elif Distill == 'RKD':
-                end_points['Dist'] = Dist.RKD(logits, logits_tch)
-
-            tf.add_to_collection('dist', end_points['Dist'])
-            tf.add_to_collection('Logits_KD', end_points['Logits_KD'])
+                tf.add_to_collection('dist', Dist.RKD(logits, logits_tch))
+                
     return end_points
 

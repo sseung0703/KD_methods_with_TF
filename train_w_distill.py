@@ -13,12 +13,12 @@ import op_util
 
 home_path = os.path.dirname(os.path.abspath(__file__))
 
-tf.app.flags.DEFINE_string('train_dir', 'test',
+tf.app.flags.DEFINE_string('train_dir', home_path + '/test',
                            'Directory where checkpoints and event logs are written to.')
-tf.app.flags.DEFINE_string('Distillation', 'DML',
+tf.app.flags.DEFINE_string('Distillation', 'KD-EID',
                            'Distillation method : Soft_logits, FitNet, AT, FSP, DML, KD-SVD, AB, RKD')
-tf.app.flags.DEFINE_string('teacher', 'ResNet32',
-                           'pretrained teacher`s weight')
+tf.app.flasg.DEFINE_string('teacher', 'ResNet32',
+                           'pretrained teacher`s weights')
 tf.app.flags.DEFINE_string('main_scope', 'Student',
                            'networ`s scope')
 FLAGS = tf.app.flags.FLAGS
@@ -74,8 +74,8 @@ def main(_):
         if FLAGS.Distillation != 'DML':
             train_op = op_util.Optimizer_w_Distillation(class_loss, LR, epoch, init_epoch, global_step, FLAGS.Distillation)
         else:
-            import op_dml
-            teacher_train_op, train_op = op_dml.Optimizer_w_Distillation(class_loss, LR, epoch, init_epoch, global_step)
+            teacher_train_op, train_op = op_util.Optimizer_w_DML(class_loss, LR, epoch, init_epoch, global_step)
+        
         
         ## collect summary ops for plotting in tensorboard
         summary_op = tf.summary.merge(tf.get_collection(tf.GraphKeys.SUMMARIES), name='summary_op')
@@ -88,9 +88,7 @@ def main(_):
         val_summary_op = tf.summary.merge(list(val_summary), name='val_summary_op')
         
         ## start training
-        highest = 0
         train_writer = tf.summary.FileWriter('%s'%FLAGS.train_dir,graph,flush_secs=save_summaries_secs)
-        val_saver   = tf.train.Saver()
         config = ConfigProto()
         config.gpu_options.visible_device_list = gpu_num
         config.gpu_options.allow_growth=True
@@ -103,11 +101,11 @@ def main(_):
                 ## if Distillation is True, load and assign teacher's variables
                 ## this mechanism is slower but easier to modifier than load checkpoint
                 global_variables  = tf.get_collection('Teacher')
-                p = sio.loadmat(home_path + '/pre_trained/%s.mat' %FLAGS.teacher)
+                teacher = sio.loadmat(home_path + '/pre_traines/%s.mat'%FLAGS.teacher)
                 n = 0
                 for v in global_variables:
-                    if p.get(v.name[:-2]) is not None:
-                        sess.run(v.assign(p[v.name[:-2]].reshape(*v.get_shape().as_list()) ))
+                    if teacher.get(v.name[:-2]) is not None:
+                        sess.run(v.assign(teacher[v.name[:-2]].reshape(*v.get_shape().as_list()) ))
                         n += 1
                 print ('%d Teacher params assigned'%n)
                 
@@ -169,19 +167,12 @@ def main(_):
                     else:
                         train_writer.add_summary(result_log, epoch_)
                     sum_train_accuracy = []
-                    if sum_val_accuracy > highest:
-                        highest = sum_val_accuracy
-                        var = {}
-                        variables  = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)+tf.get_collection('BN_collection')
-                        for v in variables:
-                            var[v.name[:-2]] = sess.run(v)
-                        sio.savemat(FLAGS.train_dir + '/best_params.mat',var)
 
-                    val_saver.save(sess, "%s/best_model.ckpt"%FLAGS.train_dir)
                     epoch_ += 1
                     
                 if step % should_log == 0:
                     tf.logging.info('global step %s: loss = %.4f (%.3f sec/step)',str(step).rjust(6, '0'), np.mean(total_loss), np.mean(time_elapsed))
+                    train_writer.add_summary(log, step)
                     time_elapsed = []
                     total_loss = []
                 

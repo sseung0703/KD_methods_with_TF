@@ -1,5 +1,4 @@
 import tensorflow as tf
-import numpy as np
 from nets import SVP
 
 def Soft_logits(student, teacher, T = 2):
@@ -25,7 +24,7 @@ def FitNet(student, teacher):
                 with tf.variable_scope('Map'):
                     target = tf.contrib.layers.fully_connected(target, Ds, biases_initializer = None, trainable=True, scope = 'fc')
             
-            return tf.reduce_mean(tf.reduce_sum(tf.square(source-target),[1,2,3]))
+            return tf.reduce_mean(tf.square(source-target))
     return tf.add_n([Guided(std, tch) for i, std, tch in zip(range(len(student)), student, teacher)])
 
 def Attention_transfer(student, teacher, beta = 1e3):
@@ -65,8 +64,8 @@ def FSP(students, teachers, weight = 1e-3):
             if t_sz[1] > b_sz[1]:
                 top = tf.contrib.layers.max_pool2d(top, [2, 2], 2)
                             
-            top = tf.reshape(top,[t_sz[0], -1, t_sz[-1]])
-            bot = tf.reshape(bot,[b_sz[0], -1, b_sz[-1]])
+            top = tf.reshape(top,[-1, b_sz[1]*b_sz[2], t_sz[3]])
+            bot = tf.reshape(bot,[-1, b_sz[1]*b_sz[2], b_sz[3]])
     
             Gram = tf.matmul(top, bot, transpose_a = True)/(b_sz[1]*b_sz[2])
             return Gram
@@ -97,7 +96,7 @@ def KD_SVD(student_feature_maps, teacher_feature_maps, dist_type = 'SVD'):
     European Conference on ComputerVision, pages 339–354. Springer, 2018.
     '''
     with tf.variable_scope('Distillation'):
-        GNN_losses = []
+        Transfer_losses = []
         K = 4
         V_Tb = V_Sb = None
         for i, sfm, tfm in zip(range(len(student_feature_maps)), student_feature_maps, teacher_feature_maps):
@@ -125,11 +124,11 @@ def KD_SVD(student_feature_maps, teacher_feature_maps, dist_type = 'SVD'):
 
                     l2loss = (S_rbf-tf.stop_gradient(T_rbf))**2
                     l2loss = tf.where(tf.is_finite(l2loss), l2loss, tf.zeros_like(l2loss))
-                    GNN_losses.append(tf.reduce_sum(l2loss))
+                    Transfer_losses.append(tf.reduce_sum(l2loss))
             V_Tb = V_T
             V_Sb = V_S
 
-        transfer_loss =  tf.add_n(GNN_losses)
+        transfer_loss =  tf.add_n(Transfer_losses)
 
         return transfer_loss
 
@@ -141,7 +140,6 @@ def AB_distillation(student, teacher, margin=1., weight = 3e-3):
     '''
     def criterion_alternative_L2(source, target, margin, num):
         with tf.variable_scope('criterion_alternative_L2'):
-            Ds = source.get_shape().as_list()[-1]
             Dt = target.get_shape().as_list()[-1]
             with tf.variable_scope('Map'):
                 source = tf.contrib.layers.conv2d(source, Dt, [1, 1], biases_initializer = None, trainable=True, scope = 'connector%d' % (num))
@@ -185,4 +183,3 @@ def RKD(source, target, l = [1e2,2e2]):
         angle_loss    = Huber_loss(   Angle_wise_potential(source),   Angle_wise_potential(target))
         
         return distance_loss*l[0]+angle_loss*l[1]
-    
