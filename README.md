@@ -29,7 +29,7 @@ Increases knowledge by sensing several points of the teacher network
 - Jacobian Matching (JB) (In process): They combine attention matching loss and Jacobian matching loss.
   -[Suraj Srinivas, Francois Fleuret. Knowledge Transfer with Jacobian Matching. arXiv preprint arXiv:1803.00443, 2018.](https://arxiv.org/pdf/1803.00443.pdf)
 - Activation boundary (AB) : To soften teacher network's constraint, they propose the new metric function inspired by hinge loss which usually used for SVM.
-  - [Byeongho Heo, et. al. Knowledge transfer via distillation of activation boundaries formed by hidden neurons. AAAI2019](https://arxiv.org/abs/1811.03233)
+  - [Byeongho Heo, et. al. Knowledge transfer via distillation of activation boundaries formed by hidden neurons. AAAI2019](https://arxiv.org/abs/1811.03233) (rivised by Author)
 
 ## Shared-representation Knowledge
 Defined knowledge by the relation between two feature maps
@@ -49,10 +49,8 @@ The below table and plot are sample results using [ResNet](http://openaccess.the
 
 I use the same hyper-parameter for training each network, and only tune hyper-parameter of each distillation algorithm. But the results may be not optimal. All of the numerical values and plots are averages of five trials.
 
-
-
 ## Network architecture
-The teacher network is ResNet32 and Student is ResNet8, and the student network is well-converged (not over and under-fit) for evaluating each distillation algorithm performance precisely.
+The teacher network is ResNet32 and Student is ResNet8, and the student network is well-converged (not over and under-fit) for evaluating each distillation algorithm performance precisely. Note that implemented ResNet has doubled depth.
 
 ## Training/Validation plots
 
@@ -66,7 +64,7 @@ AT          | 72.31 | 72.60
 FSP         | 72.65 | 72.91
 DML         | 73.27 | 73.47
 KD-SVD      | 73.68 | 73.78
-AB          | 72.80 | 73.10
+AB          | 73.08 | 73.41
 RKD         | 73.40 | 73.48
 
 <img src="plots.png" width="600">
