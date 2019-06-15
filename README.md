@@ -70,4 +70,4 @@ RKD         | 73.40 | 73.48
 <img src="plots.png" width="600">
 
 # Plan to do
-- Implement the Jacobian matching
+- Implement the Zeros-shot learning
