@@ -101,7 +101,7 @@ def main(_):
                 ## if Distillation is True, load and assign teacher's variables
                 ## this mechanism is slower but easier to modifier than load checkpoint
                 global_variables  = tf.get_collection('Teacher')
-                teacher = sio.loadmat(home_path + '/pre_traines/%s.mat'%FLAGS.teacher)
+                teacher = sio.loadmat(home_path + '/pre_trained/%s.mat'%FLAGS.teacher)
                 n = 0
                 for v in global_variables:
                     if teacher.get(v.name[:-2]) is not None:
@@ -193,7 +193,7 @@ def main(_):
 
 def MODEL(model_name, scope, weight_decay, image, label, is_training, reuse, drop, Distillation):
     network_fn = nets_factory.get_network_fn(model_name, weight_decay = weight_decay)
-    end_points = network_fn(image, scope, is_training=is_training, reuse=reuse, drop = drop, Distill=Distillation)
+    end_points = network_fn(image, label, scope, is_training=is_training, reuse=reuse, drop = drop, Distill=Distillation)
 
     loss = tf.losses.softmax_cross_entropy(label,end_points['Logits'])
     if Distillation == 'DML':

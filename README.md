@@ -70,4 +70,4 @@ RKD         | 73.40 | 73.48
 <img src="plots.png" width="600">
 
 # Plan to do
-- Implement the Zeros-shot knowledge distillation
+- Implement the Zeros-shot knowledge distillation (implemented in other [repo](https://github.com/sseung0703/Zero-shot_Knowledge_Distillation). and the merging process is ongoing)
