@@ -108,6 +108,7 @@ def KD_SVD(student_feature_maps, teacher_feature_maps, dist_type = 'SVD'):
                     V_S, V_T = SVP.Align_rsv(V_S, V_T)
                     
                 elif dist_type == 'EID':
+                    # KD-EID is the lighter version of KD-SVD. It is faster than KD-SVD about twice!
                     Sigma_T, U_T, V_T = SVP.SVD_eid(tfm, K, name = 'TSVD%d'%i)
                     Sigma_S, U_S, V_S = SVP.SVD_eid(sfm, K, name = 'SSVD%d'%i)
                     B, D,_ = V_S.get_shape().as_list()
