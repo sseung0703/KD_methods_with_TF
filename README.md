@@ -22,12 +22,8 @@ Defined knowledge by the neural response of the hidden layer or the output layer
 Increases knowledge by sensing several points of the teacher network
 - FitNet : To increase amounts of information, knowledge is defined by multi-connected networks and compared feature maps by L2-distance.
   - [Adriana Romero, et al. Fitnets: Hints for thin deep nets. arXiv preprint arXiv:1412.6550, 2014.](https://arxiv.org/abs/1412.6550)
-  
 - Attention transfer (AT) : Knowledge is defined by attention map which is L2-norm of each feature point.
   - [Zagoruyko, Sergey et. al. Paying more attention to attention: Improving the performance of convolutional neural networks via attention transfer. arXiv preprint arXiv:1612.03928, 2016.](https://arxiv.org/pdf/1612.03928.pdf)
-  
-- Jacobian Matching (JB) (In process): They combine attention matching loss and Jacobian matching loss.
-  -[Suraj Srinivas, Francois Fleuret. Knowledge Transfer with Jacobian Matching. arXiv preprint arXiv:1803.00443, 2018.](https://arxiv.org/pdf/1803.00443.pdf)
 - Activation boundary (AB) : To soften teacher network's constraint, they propose the new metric function inspired by hinge loss which usually used for SVM.
   - [Byeongho Heo, et. al. Knowledge transfer via distillation of activation boundaries formed by hidden neurons. AAAI2019](https://arxiv.org/abs/1811.03233) (rivised by Author)
 
@@ -41,8 +37,12 @@ Fast optimization, network minimization, and transfer learning. CVPR 2017.](http
 
 ## Relational Knowledge
 Defined knowledge by intra-data relation
-- Relational Knowledge Distillation : they propose knowledge which contains not only feature information but also intra-data relation information.
+- Relational Knowledge Distillation (RKD): they propose knowledge which contains not only feature information but also intra-data relation information.
   - [Wonpyo Park, et. al. Relational Knowledge Distillation. CVPR2019](https://arxiv.org/abs/1904.05068?context=cs.LG)
+- Multi-head Graph Distillation (MHGD): They proposed the distillation module which built with the multi-head attention network. 
+Each attention-head extracts the relation of feature map which contains knowledge about embedding procedure.
+  - [Seunghyun Lee, Byung Cheol Song. Graph-based Knowledge Distillation by Multi-head Self-attention Network. will be published in BMVC2019]
+  
 
 # Experimental Results
 The below table and plot are sample results using [ResNet](http://openaccess.thecvf.com/content_cvpr_2016/html/He_Deep_Residual_Learning_CVPR_2016_paper.html).
@@ -71,4 +71,5 @@ RKD         | 73.40 | 73.48
 <img src="plots.png" width="600">
 
 # Plan to do
-- Implement the Zeros-shot knowledge distillation (implemented in other [repo](https://github.com/sseung0703/Zero-shot_Knowledge_Distillation). and the merging process is ongoing)
+- Implement the Zeros-shot knowledge distillation (implemented in other [repo](https://github.com/sseung0703/Zero-shot_Knowledge_Distillation). and the merging process is ongoing) (Sorry for the delay. :( hyper-parameter tuning is not going well. I think the ZSKD is not good for a dataset that has many labels....)
+- Upload the multi-head graph distillation.
