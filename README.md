@@ -41,7 +41,7 @@ Defined knowledge by intra-data relation
   - [Wonpyo Park, et. al. Relational Knowledge Distillation. CVPR2019](https://arxiv.org/abs/1904.05068?context=cs.LG)
 - Multi-head Graph Distillation (MHGD): They proposed the distillation module which built with the multi-head attention network. 
 Each attention-head extracts the relation of feature map which contains knowledge about embedding procedure.
-  - [Seunghyun Lee, Byung Cheol Song. Graph-based Knowledge Distillation by Multi-head Self-attention Network. will be published in BMVC2019]
+  - [Seunghyun Lee, Byung Cheol Song. Graph-based Knowledge Distillation by Multi-head Self-attention Network. will be published in BMVC2019](https://arxiv.org/abs/1907.02226)
   
 
 # Experimental Results
