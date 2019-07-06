@@ -1,15 +1,14 @@
 # Knowledge Distillation Methods with Tensorflow
+(Sadly, my English skill is terribly low!! so please get patient to read my mess of words. :) )
+
 Knowledge distillation is the method to enhance student network by teacher knowledge.
-So annually knowledge distillation methods have been proposed but each paper's do experiments with different networks and compare with different methods.
-And each method is implemented by each author, so if a new researcher wants to study knowledge distillation, they have to find or implement all of the methods. Surely it is very hard work.
-To reduce this burden, I publish some code that is modified from my research codes.
-I'll update the code and knowledge distillation algorithm, and all of the things will be implemented by Tensorflow.
-
-If you want something a new method, please notice to me :)
-
+So annually knowledge distillation methods have been proposed, but each paper's do experiments with different networks and compare with different methods.
+Moreover, each method is implemented by each author, so if a new researcher wants to study knowledge distillation, they have to find or implement all of the methods. Surely it is tough work.
+To reduce this burden, I publish some codes and modify from my research codes.
+I'll update the code and knowledge distillation algorithm, and all of the things will be implemented using Tensorflow.
 
 # Implemented Knowledge Distillation Methods
-below methods are implemented and base on insight with [TAKD](https://arxiv.org/abs/1902.03393), I make each category. I think they are meaningful categories, but if you think it has problems please notice for me :)
+I make each category base on insight with [TAKD](https://arxiv.org/abs/1902.03393),
 
 ## Response-based Knowledge
 Defined knowledge by the neural response of the hidden layer or the output layer of the network
@@ -47,7 +46,7 @@ Each attention-head extracts the relation of feature map which contains knowledg
 # Experimental Results
 The below table and plot are sample results using [ResNet](http://openaccess.thecvf.com/content_cvpr_2016/html/He_Deep_Residual_Learning_CVPR_2016_paper.html).
 
-I use the same hyper-parameter for training each network, and only tune hyper-parameter of each distillation algorithm. But the results may be not optimal. All of the numerical values and plots are averages of five trials.
+I use the same hyper-parameter for training each network, and only tune hyper-parameter of each distillation algorithm. However the results may be not optimal. All of the numerical values and plots are averages of five trials.
 
 ## Network architecture
 The teacher network is ResNet32 and Student is ResNet8, and the student network is well-converged (not over and under-fit) for evaluating each distillation algorithm performance precisely. Note that implemented ResNet has doubled depth.
