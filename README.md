@@ -44,7 +44,7 @@ Each attention-head extracts the relation of feature map which contains knowledg
   
 
 # Experimental Results
-The below table and plot are sample results using [ResNet](http://openaccess.thecvf.com/content_cvpr_2016/html/He_Deep_Residual_Learning_CVPR_2016_paper.html).
+The below table and plot are sample results using [ResNet](http://openaccess.thecvf.com/content_cvpr_2016/html/He_Deep_Residual_Learning_CVPR_2016_paper.html) and train on CIFAR100.
 
 I use the same hyper-parameter for training each network, and only tune hyper-parameter of each distillation algorithm. However the results may be not optimal. All of the numerical values and plots are averages of five trials.
 
