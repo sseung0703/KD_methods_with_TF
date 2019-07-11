@@ -15,8 +15,7 @@ def ResNet_arg_scope(weight_decay=0.0005):
         with tf.contrib.framework.arg_scope([tf.contrib.layers.batch_norm],
                             scale = True, center = True, activation_fn=tf.nn.relu, decay=0.9, epsilon = 1e-5,
                             param_regularizers={'gamma': tf.contrib.layers.l2_regularizer(weight_decay),
-                                                'beta' : tf.contrib.layers.l2_regularizer(weight_decay)
-                                                },
+                                                'beta' : tf.contrib.layers.l2_regularizer(weight_decay)},
                             variables_collections=[tf.GraphKeys.GLOBAL_VARIABLES,'BN_collection']) as arg_sc:
             return arg_sc
 
@@ -51,7 +50,7 @@ def ResNet(image, label, scope, is_training, reuse = False, drop = False, Distil
     
     nChannels = [32, 64, 128, 256]
     stride = [1,2,2]
-        
+    
     n = 1 if scope != 'Teacher' else 5
     with tf.variable_scope(scope):
         std = tf.contrib.layers.conv2d(image, nChannels[0], [3,3], 1, scope='conv0', trainable=True, reuse = reuse)
@@ -60,10 +59,8 @@ def ResNet(image, label, scope, is_training, reuse = False, drop = False, Distil
             std = NetworkBlock(std, n, nChannels[1+i], stride[i], is_training = is_training, reuse = reuse, name = 'Resblock%d'%i)
         fc = tf.reduce_mean(std, [1,2])
         logits = tf.contrib.layers.fully_connected(fc , label.get_shape().as_list()[-1],
-                                      weights_initializer = tf.contrib.layers.variance_scaling_initializer(factor=1.0),
-                                      biases_initializer = tf.zeros_initializer(),
-                                      biases_regularizer = tf.contrib.layers.l2_regularizer(5e-4),
-                                      trainable=True, scope = 'full', reuse = reuse)
+                                                   biases_initializer = tf.zeros_initializer(),
+                                                   trainable=True, scope = 'full', reuse = reuse)
         end_points['Logits'] = logits
     
     if Distill is not None:
@@ -89,9 +86,7 @@ def ResNet(image, label, scope, is_training, reuse = False, drop = False, Distil
                         tch = NetworkBlock(tch, n, nChannels[1+i], stride[i], is_training = is_training, reuse = reuse, name = 'Resblock%d'%i)
                     fc = tf.reduce_mean(tch, [1,2])
                     logits_tch = tf.contrib.layers.fully_connected(fc , label.get_shape().as_list()[-1],
-                                                                   weights_initializer = tf.contrib.layers.variance_scaling_initializer(factor=1.0),
                                                                    biases_initializer = tf.zeros_initializer(),
-                                                                   biases_regularizer = tf.contrib.layers.l2_regularizer(5e-4),
                                                                    trainable=teacher_train, scope = 'full', reuse = reuse)
                     end_points['Logits_tch'] = logits_tch
                     
@@ -119,9 +114,11 @@ def ResNet(image, label, scope, is_training, reuse = False, drop = False, Distil
                 tf.add_to_collection('dist', Dist.KD_SVD(student_feats, teacher_feats, 'EID'))
             elif Distill == 'AB':
                 tf.add_to_collection('dist', Dist.AB_distillation(student_feats_noact, teacher_feats_noact, 1., 3e-3))
-                tf.add_to_collection('dist', Dist.Soft_logits(logits, logits_tch, 3))
             elif Distill == 'RKD':
                 tf.add_to_collection('dist', Dist.RKD(logits, logits_tch))
+            elif Distill == 'MHGD':
+                tf.add_to_collection('dist', Dist.MHGD(student_feats, teacher_feats))
                 
     return end_points
+
 

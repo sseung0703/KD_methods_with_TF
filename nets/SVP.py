@@ -7,12 +7,14 @@ def removenan(x):
 def SVD(X, n, name = None):
     with tf.variable_scope(name):
         sz = X.get_shape().as_list()
-        if len(sz)>2:
+        if len(sz)==4:
             x = tf.reshape(X,[-1,sz[1]*sz[2],sz[3]])
-            n = min(n, sz[1]*sz[2], sz[3])
+        elif len(sz)==3:
+            x = X
         else:
             x = tf.expand_dims(X, 1)
             n = 1
+        _, HW, D = x.get_shape().as_list()
 
         with tf.device('CPU'):
             g = tf.get_default_graph()
@@ -23,25 +25,27 @@ def SVD(X, n, name = None):
         v = removenan(v)
         u = removenan(u)
         
-        s = tf.nn.l2_normalize(tf.slice(s,[0,0],[-1,n]),1)
-        U = tf.nn.l2_normalize(tf.slice(u,[0,0,0],[-1,-1,n]),1)
-        V = tf.nn.l2_normalize(tf.slice(v,[0,0,0],[-1,-1,n]),1)
+        if n > 0:
+            s = tf.nn.l2_normalize(tf.slice(s,[0,0],[-1,n]),1)
+            u = tf.nn.l2_normalize(tf.slice(u,[0,0,0],[-1,-1,n]),1)
+            v = tf.nn.l2_normalize(tf.slice(v,[0,0,0],[-1,-1,n]),1)
         
-        return s, U, V
+        return s, u, v
 
 def SVD_eid(X, n, name = None):
     with tf.variable_scope(name):
         sz = X.get_shape().as_list()
-        if len(sz)>2:
+        if len(sz)==4:
             x = tf.reshape(X,[-1,sz[1]*sz[2],sz[3]])
-            n = min(n, sz[1]*sz[2], sz[3])
+        elif len(sz)==3:
+            x = X
         else:
             x = tf.expand_dims(X, 1)
             n = 1
-
         _, HW, D = x.get_shape().as_list()
 
         x_ = tf.stop_gradient(x)
+
         if HW/D < 3/2  and 2/3 < HW/D:
             with tf.device('CPU'):
                 g = tf.get_default_graph()
@@ -53,7 +57,7 @@ def SVD_eid(X, n, name = None):
                 xxt = tf.matmul(x_,x_,transpose_b = True)
                 with tf.device('CPU'):
                     _,u_svd,_ = tf.svd(xxt,full_matrices=False)
-    
+
                 v_svd = tf.matmul(x_, u_svd, transpose_a = True)
                 s_svd = tf.linalg.norm(v_svd, axis = 1)
                 v_svd = removenan(v_svd/tf.expand_dims(s_svd,1))
@@ -63,7 +67,6 @@ def SVD_eid(X, n, name = None):
                 with tf.device('CPU'):
                     _, v_svd = tf.linalg.eigh(xtx)
                 v_svd = tf.reshape(tf.image.flip_left_right(tf.reshape(v_svd,[-1,D,D,1])),[-1,D,D])
-    
                 u_svd = tf.matmul(x_, v_svd)
                 s_svd = tf.linalg.norm(u_svd, axis = 1)
                 u_svd = removenan(u_svd/tf.expand_dims(s_svd,1))
@@ -72,19 +75,18 @@ def SVD_eid(X, n, name = None):
             s = tf.reshape(s,[-1,   min(HW,D)])
             u = tf.reshape(u,[-1,HW,min(HW,D)])
             v = tf.reshape(v,[-1, D,min(HW,D)])
-
         s = tf.nn.l2_normalize(tf.slice(s,[0,0],[-1,n])     ,1)
         U = tf.nn.l2_normalize(tf.slice(u,[0,0,0],[-1,-1,n]),1)
         V = tf.nn.l2_normalize(tf.slice(v,[0,0,0],[-1,-1,n]),1)
         
         return s, U, V
     
-def Align_rsv(x, y):
-    cosine = tf.matmul(x, y, transpose_a=True)
+def Align_rsv(V_T, V_S):
+    cosine = tf.stop_gradient(tf.matmul(V_T, V_S, transpose_a=True))
     mask = tf.where(tf.equal(tf.reduce_max(tf.abs(cosine), 2,keepdims=True), tf.abs(cosine)),
                     tf.sign(cosine), tf.zeros_like(cosine))
-    x = tf.matmul(x, mask, transpose_b = True)
-    return x, y
+    V_S = tf.matmul(V_S, mask, transpose_b = True)
+    return V_S, mask
 
 @tf.RegisterGradient('Svd_')
 def gradient_svd(op, ds, dU, dV):
@@ -108,17 +110,15 @@ def gradient_svd(op, ds, dU, dV):
     def left_grad(U,S,V,dU,dV):
         U, V = (V, U); dU, dV = (dV, dU)
         D = tf.matmul(dU,tf.matrix_diag(1/(s+1e-8)))
-        US = tf.matmul(U,S)
     
-        grad = tf.matmul(D, V, transpose_b=True)\
-              +tf.matmul(tf.matmul(U,tf.matrix_diag(tf.matrix_diag_part(-tf.matmul(U,D,transpose_a=True)))), V, transpose_b=True)\
-              +tf.matmul(2*tf.matmul(US, msym(KT*(tf.matmul(V,-tf.matmul(V,tf.matmul(D,US,transpose_a=True)),transpose_a=True)))),V,transpose_b=True)
+        grad = tf.matmul(D + tf.matmul(U, tf.matrix_diag(tf.matrix_diag_part(-tf.matmul(U,D,transpose_a=True)))
+                           + 2*tf.matmul(S, msym(KT*(-tf.matmul(D,tf.matmul(U,S),transpose_a=True))))) ,V,transpose_b=True)
+        
         grad = tf.matrix_transpose(grad)
         return grad
 
     def right_grad(U,S,V,dU,dV):
-        US = tf.matmul(U,S)
-        grad = tf.matmul(2*tf.matmul(US, msym(KT*(tf.matmul(V,dV,transpose_a=True))) ),V,transpose_b=True)
+        grad = tf.matmul(2*tf.matmul(U, tf.matmul(S, msym(KT*(tf.matmul(V,dV,transpose_a=True)))) ),V,transpose_b=True)
         return grad
     
     grad = tf.cond(tf.greater(v_sz, u_sz), lambda : left_grad(U,S,V,dU,dV), 

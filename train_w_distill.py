@@ -9,16 +9,17 @@ import numpy as np
 from random import shuffle
 
 from nets import nets_factory
+from dataloader import Dataloader
 import op_util
 
 home_path = os.path.dirname(os.path.abspath(__file__))
 
-tf.app.flags.DEFINE_string('train_dir', home_path + '/test',
+tf.app.flags.DEFINE_string('train_dir', '/home/cvip/Documents/tf/KD/CIFAR100/ResNet/MHGD/mhgd10',
                            'Directory where checkpoints and event logs are written to.')
-tf.app.flags.DEFINE_string('Distillation', 'KD-EID',
-                           'Distillation method : Soft_logits, FitNet, AT, FSP, DML, KD-SVD, AB, RKD')
-tf.app.flags.DEFINE_string('teacher', 'ResNet32',
-                           'pretrained teacher`s weights')
+tf.app.flags.DEFINE_string('Distillation', 'MHGD',
+                           'Distillation method : Soft_logits, FitNet, AT, FSP, DML, KD-SVD, AB, RKD, MHGD')
+tf.app.flags.DEFINE_string('dataset', 'cifar100',
+                           'Distillation method : cifar100, TinyImageNet, CUB200')
 tf.app.flags.DEFINE_string('main_scope', 'Student',
                            'networ`s scope')
 FLAGS = tf.app.flags.FLAGS
@@ -30,7 +31,7 @@ def main(_):
     batch_size = 128
     val_batch_size = 200
     train_epoch = 100
-    init_epoch = 40 if FLAGS.Distillation == 'FitNet' or FLAGS.Distillation == 'FSP' or FLAGS.Distillation == 'AB' else 0
+    init_epoch = 40 if FLAGS.Distillation in {'FitNet', 'FSP', 'AB', 'MHGD'} else 0
     
     total_epoch = init_epoch + train_epoch
     weight_decay = 5e-4
@@ -43,19 +44,18 @@ def main(_):
     if FLAGS.Distillation == 'None':
         FLAGS.Distillation = None
         
-    (train_images, train_labels), (val_images, val_labels) = load_data()
-    
-    dataset_len, *image_size = train_images.shape
+    train_images, train_labels, val_images, val_labels, pre_processing, teacher = Dataloader(FLAGS.dataset, home_path)
     num_label = int(np.max(train_labels)+1)
+    dataset_len, *image_size = train_images.shape
+
     with tf.Graph().as_default() as graph:
         # make placeholder for inputs
         image_ph = tf.placeholder(tf.uint8, [None]+image_size)
         label_ph = tf.placeholder(tf.int32, [None])
-        is_training_ph = tf.placeholder(tf.int32,[])
-        is_training = tf.equal(is_training_ph, 1)
+        is_training_ph = tf.placeholder(tf.bool,[])
         
         # pre-processing
-        image = pre_processing(image_ph, is_training)
+        image = pre_processing(image_ph, is_training_ph)
         label = tf.contrib.layers.one_hot_encoding(label_ph, num_label, on_value=1.0)
      
         # make global step
@@ -68,13 +68,15 @@ def main(_):
         
         ## load Net
         class_loss, accuracy = MODEL(model_name, FLAGS.main_scope, weight_decay, image, label,
-                                     is_training, reuse = False, drop = True, Distillation = FLAGS.Distillation)
+                                     is_training_ph, reuse = False, drop = True, Distillation = FLAGS.Distillation)
         
         #make training operator
-        if FLAGS.Distillation != 'DML':
-            train_op = op_util.Optimizer_w_Distillation(class_loss, LR, epoch, init_epoch, global_step, FLAGS.Distillation)
+        if FLAGS.Distillation == 'DML':
+            train_op, teacher_train_op = op_util.Optimizer_w_DML( class_loss, LR, epoch, init_epoch, global_step)
+        elif FLAGS.Distillation == 'MHGD':
+            train_op, train_mha = op_util.Optimizer_w_MHGD(class_loss, LR, epoch, init_epoch, global_step)
         else:
-            teacher_train_op, train_op = op_util.Optimizer_w_DML(class_loss, LR, epoch, init_epoch, global_step)
+            train_op = op_util.Optimizer_w_Distillation(class_loss, LR, epoch, init_epoch, global_step, FLAGS.Distillation)
         
         
         ## collect summary ops for plotting in tensorboard
@@ -100,8 +102,7 @@ def main(_):
             if FLAGS.Distillation is not None and FLAGS.Distillation != 'DML':
                 ## if Distillation is True, load and assign teacher's variables
                 ## this mechanism is slower but easier to modifier than load checkpoint
-                global_variables  = tf.get_collection('Teacher')
-                teacher = sio.loadmat(home_path + '/pre_trained/%s.mat'%FLAGS.teacher)
+                global_variables  = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES)
                 n = 0
                 for v in global_variables:
                     if teacher.get(v.name[:-2]) is not None:
@@ -121,12 +122,18 @@ def main(_):
                     sess.run([teacher_train_op],
                              feed_dict = {image_ph : train_images[idx[:batch_size]],
                                           label_ph : np.squeeze(train_labels[idx[:batch_size]]),
-                                          is_training_ph : 1})
-    
-                tl, log, train_acc = sess.run([train_op, summary_op, accuracy],
-                                              feed_dict = {image_ph : train_images[idx[:batch_size]],
-                                                           label_ph : np.squeeze(train_labels[idx[:batch_size]]),
-                                                           is_training_ph : 1})
+                                          is_training_ph : True})
+                                          
+                elif FLAGS.Distillation == 'MHGD' and (step*batch_size)//dataset_len < init_epoch:
+                    tl, log, train_acc = sess.run([train_mha, summary_op, accuracy],
+                                                  feed_dict = {image_ph : train_images[idx[:batch_size]],
+                                                               label_ph : np.squeeze(train_labels[idx[:batch_size]]),
+                                                               is_training_ph : True})
+                else:
+                    tl, log, train_acc = sess.run([train_op, summary_op, accuracy],
+                                                  feed_dict = {image_ph : train_images[idx[:batch_size]],
+                                                               label_ph : np.squeeze(train_labels[idx[:batch_size]]),
+                                                               is_training_ph : True})
     
                 time_elapsed.append( time.time() - start_time )
                 total_loss.append(tl)
@@ -145,7 +152,7 @@ def main(_):
                         val_batch = val_images[i*val_batch_size:(i+1)*val_batch_size]
                         acc = sess.run(accuracy, feed_dict = {image_ph : val_batch,
                                                               label_ph : np.squeeze(val_labels[i*val_batch_size:(i+1)*val_batch_size]),
-                                                              is_training_ph : 0})
+                                                              is_training_ph : False})
                         sum_val_accuracy.append(acc)
                         
                     sum_train_accuracy = np.mean(sum_train_accuracy)*100 if (step*batch_size)//dataset_len>init_epoch else 1.
@@ -156,6 +163,7 @@ def main(_):
 
                     result_log = sess.run(val_summary_op, feed_dict={train_acc_place : sum_train_accuracy,
                                                                      val_acc_place   : sum_val_accuracy   })
+    
                     if (step*batch_size)//dataset_len == init_epoch and init_epoch > 0:
                         #re-initialize Momentum for fair comparison w/ initialization and multi-task learning methods
                         for v in global_variables:
@@ -176,6 +184,7 @@ def main(_):
                     time_elapsed = []
                     total_loss = []
                 
+                
                 elif (step*batch_size) % dataset_len == 0:
                     train_writer.add_summary(log, step)
 
@@ -184,6 +193,7 @@ def main(_):
             variables  = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)+tf.get_collection('BN_collection')
             for v in variables:
                 var[v.name[:-2]] = sess.run(v)
+
             sio.savemat(FLAGS.train_dir + '/train_params.mat',var)
             
             ## close all
@@ -201,20 +211,6 @@ def MODEL(model_name, scope, weight_decay, image, label, is_training, reuse, dro
     accuracy = tf.contrib.metrics.accuracy(tf.to_int32(tf.argmax(end_points['Logits'], 1)), tf.to_int32(tf.argmax(label, 1)))
     return loss, accuracy
     
-def pre_processing(image, is_training):
-    with tf.variable_scope('preprocessing'):
-        image = tf.to_float(image)
-        image = (image-np.array([112.4776,124.1058,129.3773],dtype=np.float32).reshape(1,1,3))/np.array([70.4587,65.4312,68.2094],dtype=np.float32).reshape(1,1,3)
-        
-        def augmentation(image):
-            image = tf.image.random_flip_left_right(image) # tf.__version__ > 1.10
-            sz = tf.shape(image)
-            image = tf.pad(image, [[0,0],[4,4],[4,4],[0,0]], 'REFLECT')
-            image = tf.random_crop(image,sz)
-            return image
-        image = tf.cond(is_training, lambda : augmentation(image), lambda : image)
-    return image
-
 def learning_rate_scheduler(Learning_rate, epochs, decay_point, decay_rate):
     with tf.variable_scope('learning_rate_scheduler'):
         e, ie, te = epochs
@@ -226,4 +222,5 @@ def learning_rate_scheduler(Learning_rate, epochs, decay_point, decay_rate):
 
 if __name__ == '__main__':
     tf.app.run()
+
 
