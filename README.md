@@ -66,9 +66,8 @@ KD-SVD      | 73.68 | 73.78
 KD-EID      | 73.84 | 74.07
 AB          | 73.08 | 73.41
 RKD         | 73.40 | 73.48
-
+MHGD        | 73.98 | 74.30
 <img src="plots.png" width="600">
 
 # Plan to do
 - Implement the Zeros-shot knowledge distillation (implemented in other [repo](https://github.com/sseung0703/Zero-shot_Knowledge_Distillation). and the merging process is ongoing) (Sorry for the delay. :( hyper-parameter tuning is not going well. I think the ZSKD is not good for a dataset that has many labels....)
-- Upload the multi-head graph distillation.
