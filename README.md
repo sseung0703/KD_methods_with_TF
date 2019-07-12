@@ -50,7 +50,7 @@ I use the same hyper-parameter for training each network, and only tune hyper-pa
 ## Network architecture
 The teacher network is ResNet32 and Student is ResNet8, and the student network is well-converged (not over and under-fit) for evaluating each distillation algorithm performance precisely. Note that implemented ResNet has doubled depth.
 
-## Training/Validation plots
+## Training/Validation accuracy
 
 Methods | Last Accuracy | Best Accuracy
 ------------| ------------- | -------------
