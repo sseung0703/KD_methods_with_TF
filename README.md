@@ -8,7 +8,7 @@ To reduce this burden, I publish some codes and modify from my research codes.
 I'll update the code and knowledge distillation algorithm, and all of the things will be implemented using Tensorflow.
 
 # Implemented Knowledge Distillation Methods
-I make each category base on insight with [TAKD](https://arxiv.org/abs/1902.03393),
+Please check detail of each category in [MHGD](https://arxiv.org/abs/1907.02226)
 
 ## Response-based Knowledge
 Defined knowledge by the neural response of the hidden layer or the output layer of the network
