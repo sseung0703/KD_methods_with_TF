@@ -1,6 +1,4 @@
 # Knowledge Distillation Methods with Tensorflow
-(Sadly, my English skill is terribly low!! so please get patient to read my mess of words. :) )
-
 Knowledge distillation is the method to enhance student network by teacher knowledge.
 So annually knowledge distillation methods have been proposed, but each paper's do experiments with different networks and compare with different methods.
 Moreover, each method is implemented by each author, so if a new researcher wants to study knowledge distillation, they have to find or implement all of the methods. Surely it is tough work.
