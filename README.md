@@ -16,6 +16,7 @@ Defined knowledge by the neural response of the hidden layer or the output layer
   - [Geoffrey Hinton, et al. Distilling the knowledge in a neural network. arXiv:1503.02531, 2015.](https://arxiv.org/abs/1503.02531)
 - Deep Mutual Learning (DML) : train teacher and student network coincidently, to follow not only training results but teacher network's training procedure.
   - [Zhang, Ying, et al. "Deep mutual learning." Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition. 2018.](http://openaccess.thecvf.com/content_cvpr_2018/html/Zhang_Deep_Mutual_Learning_CVPR_2018_paper.html)
+  - [Jangho Kim et al. "Paraphrasing Complex Network: Network Compression via Factor Transfer" Advances in Neural Information Processing Systems (NeurIPS) 2018](https://papers.nips.cc/paper/7541-paraphrasing-complex-network-network-compression-via-factor-transfer)
 
 ## Multi-connection Knowledge
 Increases knowledge by sensing several points of the teacher network
@@ -70,4 +71,5 @@ MHGD        | 73.98 | 74.30
 <img src="plots.png" width="600">
 
 # Plan to do
-- Implement the Zeros-shot knowledge distillation (implemented in other [repo](https://github.com/sseung0703/Zero-shot_Knowledge_Distillation). and the merging process is ongoing) (Sorry for the delay. :( hyper-parameter tuning is not going well. I think the ZSKD is not good for a dataset that has many labels....)
+- Upload Factor Transfer (Final check is on going :))
+- Zero-shot is dropped. :(
