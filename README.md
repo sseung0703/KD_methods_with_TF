@@ -6,14 +6,22 @@ To reduce this burden, I publish some codes and modify from my research codes.
 I'll update the code and knowledge distillation algorithm, and all of the things will be implemented using Tensorflow.
 
 # Implemented Knowledge Distillation Methods
-Please check detail of each category in [MHGD](https://arxiv.org/abs/1907.02226)
+Please check detail of each category in [MHGD](https://arxiv.org/abs/1907.02226) and If you think the above categorization is useful, please consider citing the following paper.
+
+    @inproceedings{GraphKD,
+      title = {Graph-based Knowledge Distillation by Multi-head Attention Network},
+      author = {Seunghyun Lee, Byung Cheol Song},
+      booktitle = {British Machine Vision Conference (BMVC)},
+      year = {2019}
+    }
 
 ## Response-based Knowledge
 Defined knowledge by the neural response of the hidden layer or the output layer of the network
 - Soft-logit : The first knowledge distillation method for deep neural network. Knowledge is defined by softened logits. Because it is easy to handle it, many applied methods were proposed using it such as semi-supervised learning, defencing adversarial attack and so on.
   - [Geoffrey Hinton, et al. Distilling the knowledge in a neural network. arXiv:1503.02531, 2015.](https://arxiv.org/abs/1503.02531)
 - Deep Mutual Learning (DML) : train teacher and student network coincidently, to follow not only training results but teacher network's training procedure.
-  - [Zhang, Ying, et al. "Deep mutual learning." Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition. 2018.](http://openaccess.thecvf.com/content_cvpr_2018/html/Zhang_Deep_Mutual_Learning_CVPR_2018_paper.html)
+  - [Zhang, Ying, et al. "Deep mutual learning." Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition. 2018.](http://openaccess.thecvf.com/content_cvpr_2018/html/Zhang_Deep_Mutual_Learning_CVPR_2018_paper.html)\
+- Factor Transfer (FT) : Encode a teacher network's feature map, and transfer the knowledge by mimicking it.
   - [Jangho Kim et al. "Paraphrasing Complex Network: Network Compression via Factor Transfer" Advances in Neural Information Processing Systems (NeurIPS) 2018](https://papers.nips.cc/paper/7541-paraphrasing-complex-network-network-compression-via-factor-transfer)
 
 ## Multi-connection Knowledge
@@ -41,7 +49,6 @@ Defined knowledge by intra-data relation
 Each attention-head extracts the relation of feature map which contains knowledge about embedding procedure.
   - [Seunghyun Lee, Byung Cheol Song. Graph-based Knowledge Distillation by Multi-head Self-attention Network. will be published in BMVC2019](https://arxiv.org/abs/1907.02226)
   
-
 # Experimental Results
 The below table and plot are sample results using [ResNet](http://openaccess.thecvf.com/content_cvpr_2016/html/He_Deep_Residual_Learning_CVPR_2016_paper.html) and train on CIFAR100.
 
@@ -70,4 +77,3 @@ MHGD        | 73.98 | 74.30
 
 # Plan to do
 - Upload Factor Transfer (Final check is on going :))
-- Zero-shot is dropped. :(
