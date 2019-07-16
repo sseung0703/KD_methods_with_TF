@@ -42,7 +42,6 @@ def MHGD(student_feature_maps, teacher_feature_maps):
     '''
     with tf.variable_scope('MHGD'):
         with tf.contrib.framework.arg_scope([tf.contrib.layers.fully_connected], trainable = True,
-                                            weights_initializer=tf.initializers.random_normal(),
                                             weights_regularizer=None, variables_collections = [tf.GraphKeys.GLOBAL_VARIABLES,'MHA']):
             with tf.contrib.framework.arg_scope([tf.contrib.layers.batch_norm], activation_fn=None, trainable = True,
                                                 param_regularizers = None, variables_collections=[tf.GraphKeys.GLOBAL_VARIABLES,'MHA']):
