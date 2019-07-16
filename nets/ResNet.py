@@ -4,7 +4,11 @@ from __future__ import print_function
 
 import tensorflow as tf
 
-from nets import Distillation as Dist
+from nets import Response
+from nets import Multiple
+from nets import Shared
+from nets import Relation
+
 
 def ResNet_arg_scope(weight_decay=0.0005):
     with tf.contrib.framework.arg_scope([tf.contrib.layers.conv2d, tf.contrib.layers.fully_connected], 
@@ -99,25 +103,27 @@ def ResNet(image, label, scope, is_training, reuse = False, drop = False, Distil
             teacher_feats_noact = feats[len(feats_noact)//2:]
             
             if Distill == 'Soft_logits':
-                tf.add_to_collection('dist', Dist.Soft_logits(logits, logits_tch, 3))
+                tf.add_to_collection('dist', Response.Soft_logits(logits, logits_tch, 3))
             elif Distill == 'FitNet':
-                tf.add_to_collection('dist', Dist.FitNet(student_feats, teacher_feats))
+                tf.add_to_collection('dist', Multiple.FitNet(student_feats, teacher_feats))
             elif Distill == 'AT':
-                tf.add_to_collection('dist', Dist.Attention_transfer(student_feats_noact, teacher_feats_noact))
+                tf.add_to_collection('dist', Multiple.Attention_transfer(student_feats_noact, teacher_feats_noact))
             elif Distill == 'FSP':
-                tf.add_to_collection('dist', Dist.FSP(student_feats, teacher_feats))
+                tf.add_to_collection('dist', Shared.FSP(student_feats, teacher_feats))
             elif Distill == 'DML':
-                tf.add_to_collection('dist', Dist.DML(logits, logits_tch))
+                tf.add_to_collection('dist', Response.DML(logits, logits_tch))
             elif Distill == 'KD-SVD':
-                tf.add_to_collection('dist', Dist.KD_SVD(student_feats, teacher_feats, 'SVD'))
+                tf.add_to_collection('dist', Shared.KD_SVD(student_feats, teacher_feats, 'SVD'))
             elif Distill == 'KD-EID':
-                tf.add_to_collection('dist', Dist.KD_SVD(student_feats, teacher_feats, 'EID'))
+                tf.add_to_collection('dist', Shared.KD_SVD(student_feats, teacher_feats, 'EID'))
+            elif Distill == 'FT':
+                tf.add_to_collection('dist', Response.Factor_Transfer(student_feats_noact[-1], teacher_feats_noact[-1]))
             elif Distill == 'AB':
-                tf.add_to_collection('dist', Dist.AB_distillation(student_feats_noact, teacher_feats_noact, 1., 3e-3))
+                tf.add_to_collection('dist', Multiple.AB_distillation(student_feats_noact, teacher_feats_noact, 1., 3e-3))
             elif Distill == 'RKD':
-                tf.add_to_collection('dist', Dist.RKD(logits, logits_tch))
+                tf.add_to_collection('dist', Relation.RKD(logits, logits_tch))
             elif Distill == 'MHGD':
-                tf.add_to_collection('dist', Dist.MHGD(student_feats, teacher_feats))
+                tf.add_to_collection('dist', Relation.MHGD(student_feats, teacher_feats))
                 
     return end_points
 

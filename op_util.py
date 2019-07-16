@@ -111,7 +111,43 @@ def Optimizer_w_DML(class_loss, LR, epoch, init_epoch, global_step):
         
         return teacher_train_op, student_train_op
 
-
+def Optimizer_w_FT(class_loss, LR, epoch, init_epoch, global_step):
+    with tf.variable_scope('Optimizer_w_Distillation'):
+        phase = epoch < init_epoch
+        # get variables and update operations
+        variables_teacher = tf.get_collection('Teacher')
+        variables_para    = tf.get_collection('Para')
+        variables         = list(set(tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES))-set(variables_teacher)-set(variables_para))
+        
+        reg_loss  = tf.add_n(tf.losses.get_regularization_losses())
+        para_loss = tf.add_n(tf.get_collection('Para_loss'))
+        
+        for v in variables_para:
+            if split('/',v.name)[-1][0] == 'w':
+                para_loss += tf.reduce_sum(tf.square(v))*5e-4
+                
+        distillation_loss = tf.add_n(tf.get_collection('dist'))*5e2
+        
+        total_loss = tf.cond(phase, lambda : para_loss,
+                                    lambda : distillation_loss + reg_loss + class_loss)
+        tf.summary.scalar('loss/total_loss', total_loss)
+        tf.summary.scalar('loss/distillation_loss', distillation_loss)
+        
+        optimize  = tf.train.MomentumOptimizer(LR, 0.9, use_nesterov=True)
+        gradients      = optimize.compute_gradients(total_loss, var_list = variables)
+        gradients_para = optimize.compute_gradients(total_loss, var_list = variables_para)
+           
+        # merge update operators and make train operator
+        update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+        update_ops.append(optimize.apply_gradients(gradients, global_step=global_step))
+        update_op = tf.group(*update_ops)
+        train_op = control_flow_ops.with_dependencies([update_op], total_loss, name='train_op')
+        
+        update_ops_para = [optimize.apply_gradients(gradients_para, global_step=global_step)]
+        update_ops_para = tf.group(*update_ops_para)
+        train_op_para = control_flow_ops.with_dependencies([update_ops_para], para_loss, name='train_op_para')
+        return train_op, train_op_para
+        
 def Optimizer_w_MHGD(class_loss, LR, epoch, init_epoch, global_step):
     with tf.variable_scope('Optimizer_w_Distillation'):
         phase = epoch < init_epoch

@@ -1,7 +1,6 @@
 import tensorflow as tf
 
 from tensorflow import ConfigProto
-from tensorflow.keras.datasets.cifar100 import load_data
 
 import time, os
 import scipy.io as sio
@@ -14,10 +13,10 @@ import op_util
 
 home_path = os.path.dirname(os.path.abspath(__file__))
 
-tf.app.flags.DEFINE_string('train_dir', '/home/cvip/Documents/tf/KD/CIFAR100/ResNet/MHGD/mhgd10',
+tf.app.flags.DEFINE_string('train_dir', '/home/cvip/Documents/tf/KD/GIT/CIFAR100/ResNet/teacher',
                            'Directory where checkpoints and event logs are written to.')
-tf.app.flags.DEFINE_string('Distillation', 'MHGD',
-                           'Distillation method : Soft_logits, FitNet, AT, FSP, DML, KD-SVD, AB, RKD, MHGD')
+tf.app.flags.DEFINE_string('Distillation', None,
+                           'Distillation method : Soft_logits, FitNet, AT, FSP, DML, KD-SVD, AB, RKD, MHGD, FT')
 tf.app.flags.DEFINE_string('dataset', 'cifar100',
                            'Distillation method : cifar100, TinyImageNet, CUB200')
 tf.app.flags.DEFINE_string('main_scope', 'Student',
@@ -31,7 +30,7 @@ def main(_):
     batch_size = 128
     val_batch_size = 200
     train_epoch = 100
-    init_epoch = 40 if FLAGS.Distillation in {'FitNet', 'FSP', 'AB', 'MHGD'} else 0
+    init_epoch = 40 if FLAGS.Distillation in {'FitNet', 'FSP', 'FT', 'AB', 'MHGD'} else 0
     
     total_epoch = init_epoch + train_epoch
     weight_decay = 5e-4
@@ -46,6 +45,7 @@ def main(_):
         
     train_images, train_labels, val_images, val_labels, pre_processing, teacher = Dataloader(FLAGS.dataset, home_path)
     num_label = int(np.max(train_labels)+1)
+
     dataset_len, *image_size = train_images.shape
 
     with tf.Graph().as_default() as graph:
@@ -74,7 +74,9 @@ def main(_):
         if FLAGS.Distillation == 'DML':
             train_op, teacher_train_op = op_util.Optimizer_w_DML( class_loss, LR, epoch, init_epoch, global_step)
         elif FLAGS.Distillation == 'MHGD':
-            train_op, train_mha = op_util.Optimizer_w_MHGD(class_loss, LR, epoch, init_epoch, global_step)
+            train_op, train_op2 = op_util.Optimizer_w_MHGD(class_loss, LR, epoch, init_epoch, global_step)
+        elif FLAGS.Distillation == 'FT':
+            train_op, train_op2 = op_util.Optimizer_w_FT(class_loss, LR, epoch, init_epoch, global_step)
         else:
             train_op = op_util.Optimizer_w_Distillation(class_loss, LR, epoch, init_epoch, global_step, FLAGS.Distillation)
         
@@ -125,7 +127,7 @@ def main(_):
                                           is_training_ph : True})
                                           
                 elif FLAGS.Distillation == 'MHGD' and (step*batch_size)//dataset_len < init_epoch:
-                    tl, log, train_acc = sess.run([train_mha, summary_op, accuracy],
+                    tl, log, train_acc = sess.run([train_op2, summary_op, accuracy],
                                                   feed_dict = {image_ph : train_images[idx[:batch_size]],
                                                                label_ph : np.squeeze(train_labels[idx[:batch_size]]),
                                                                is_training_ph : True})
