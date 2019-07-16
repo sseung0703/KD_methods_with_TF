@@ -77,4 +77,4 @@ MHGD        | 73.98 | 74.30
 <img src="plots.png" width="800">
 
 # Plan to do
-- Upload Factor Transfer (Final check is on going :))
+- Find a new method.
