@@ -108,8 +108,7 @@ def Estimator(X, G, Dy, num_head, name):
     B = tf.squeeze(tf.slice(tf.shape(G),[1],[1]))
 
     G = tf.nn.softmax(G)
-    noise = tf.random.normal([num_head, B, 1])
-    G *= tf.where(noise - tf.reduce_mean(noise, 0, keepdims=True) > 0, tf.ones_like(noise), tf.zeros_like(noise))
+    G = drop_head(G, [num_head, B, 1])
     G = tf.reshape(G, [num_head*B, B])
 
     D = (Dx+Dy)//2
@@ -124,6 +123,12 @@ def Estimator(X, G, Dy, num_head, name):
         X = tf.nn.l2_normalize(X, -1)
 
     return X
+
+def drop_head(G, shape):
+    with tf.variable_scope('Drop'):
+        noise = tf.random.normal(shape)
+        G *= tf.where(noise - tf.reduce_mean(noise, 0, keepdims=True) > 0, tf.ones_like(noise), tf.zeros_like(noise))
+        return G*2 - tf.stop_gradient(G)
 
 def kld_loss(X, Y):
     with tf.variable_scope('KLD'):
