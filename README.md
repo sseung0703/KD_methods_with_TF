@@ -74,7 +74,7 @@ FT          | 73.35  | 73.50
 AB          | 73.08 | 73.41
 RKD         | 73.40 | 73.48
 MHGD        | 73.98 | 74.30
-<img src="plots.png" width="600">
+<img src="plots.png" width="800">
 
 # Plan to do
 - Upload Factor Transfer (Final check is on going :))
