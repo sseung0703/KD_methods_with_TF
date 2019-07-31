@@ -37,7 +37,7 @@ def RKD(source, target, l = [1e2,2e2]):
 def MHGD(student_feature_maps, teacher_feature_maps):
     '''
     Seunghyun Lee, Byung Cheol Song.
-    Graph-based Knowledge Distillation by Multi-head Self-attention Network.
+    Graph-based Knowledge Distillation by Multi-head Attention Network.
     British Machine Vision Conference (BMVC) 2019
     '''
     with tf.variable_scope('MHGD'):
