@@ -99,18 +99,16 @@ def main(_):
         
         val_itr = len(val_labels)//val_batch_size
         with tf.Session(config=config) as sess:
-            sess.run(tf.global_variables_initializer())
-          
             if FLAGS.Distillation is not None and FLAGS.Distillation != 'DML':
-                ## if Distillation is True, load and assign teacher's variables
-                ## this mechanism is slower but easier to modifier than load checkpoint
                 global_variables  = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES)
                 n = 0
                 for v in global_variables:
                     if teacher.get(v.name[:-2]) is not None:
-                        sess.run(v.assign(teacher[v.name[:-2]].reshape(*v.get_shape().as_list()) ))
+                        v._initial_value = tf.constant(teacher[v.name[:-2]].reshape(*v.get_shape().as_list()))
+                        v.initializer_op = tf.assign(v._variable, v._initial_value, name = v.name[:-2] + 'Assign').op
                         n += 1
                 print ('%d Teacher params assigned'%n)
+            sess.run(tf.global_variables_initializer())
                 
             sum_train_accuracy = []; time_elapsed = []; total_loss = []
             idx = list(range(train_labels.shape[0]))

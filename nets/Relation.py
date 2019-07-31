@@ -127,7 +127,7 @@ def drop_head(G, shape):
     with tf.variable_scope('Drop'):
         noise = tf.random.normal(shape)
         G *= tf.where(noise - tf.reduce_mean(noise, 0, keepdims=True) > 0, tf.ones_like(noise), tf.zeros_like(noise))
-        return G*2 - tf.stop_gradient(G)
+        return G
 
 def kld_loss(X, Y):
     with tf.variable_scope('KLD'):
