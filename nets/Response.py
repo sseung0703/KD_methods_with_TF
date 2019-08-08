@@ -25,9 +25,9 @@ def Factor_Transfer(sfm, tfm):
     Paraphrasing Complex Network: Network Compression via Factor Transfer.
     Advances in Neural Information Processing Systems (NeurIPS). 2018.
     '''
-    def Factor_transfer(X, rate, scope, reuse = False, ):
+    def Factor_transfer(X, rate, scope, reuse = False):
         with tf.variable_scope(scope):
-            with tf.contrib.framework.arg_scope([tf.contrib.layers.conv2d], weights_regularizer=None,
+            with tf.contrib.framework.arg_scope([tf.contrib.layers.conv2d, tf.contrib.layers.conv2d_transpose], weights_regularizer=None,
                                                 variables_collections = [tf.GraphKeys.GLOBAL_VARIABLES, 'Para']):
                 D = tfm.get_shape().as_list()[-1]
                 conv = tf.contrib.layers.conv2d(X,    int(D*rate**1), [3,3], 1,          scope='conv0', reuse = reuse)

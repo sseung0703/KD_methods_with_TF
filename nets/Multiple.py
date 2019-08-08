@@ -31,10 +31,10 @@ def Attention_transfer(student, teacher, beta = 1e3):
                 with tf.variable_scope('Map'):
                     source = tf.contrib.layers.fully_connected(source, Ds, biases_initializer = None, trainable=True, scope = 'fc')
             
-            Qt = tf.contrib.layers.flatten(tf.reduce_mean(tf.square(source),-1))
+            Qt = tf.reduce_mean(tf.square(source),-1)
             Qt = tf.nn.l2_normalize(Qt, [1,2])
             
-            Qs = tf.contrib.layers.flatten(tf.reduce_mean(tf.square(target),-1))
+            Qs = tf.reduce_mean(tf.square(target),-1)
             Qs = tf.nn.l2_normalize(Qs, [1,2])
             
             return tf.reduce_mean(tf.square(Qt-Qs))*beta/2

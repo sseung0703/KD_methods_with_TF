@@ -20,10 +20,10 @@ def Optimizer_w_Distillation(class_loss, LR, epoch, init_epoch, global_step, Dis
             
         elif Distillation == 'Soft_logits':
             # multi-task learning with alpha
-            total_loss = class_loss*0.7 + tf.add_n(tf.losses.get_regularization_losses()) + tf.get_collection('dist')[0]*0.3
+            total_loss = tf.add_n(tf.losses.get_regularization_losses()) + tf.get_collection('dist')[0]
             tf.summary.scalar('loss/total_loss', total_loss)
             gradients  = optimize.compute_gradients(total_loss, var_list = variables)
-        elif Distillation in {'AT','RKD'}:
+        elif Distillation in {'AT', 'RKD'}:
             # simple multi-task learning
             total_loss = class_loss + tf.add_n(tf.losses.get_regularization_losses()) + tf.get_collection('dist')[0]
             tf.summary.scalar('loss/total_loss', total_loss)
@@ -34,10 +34,9 @@ def Optimizer_w_Distillation(class_loss, LR, epoch, init_epoch, global_step, Dis
             # in initialization phase, weight decay have to be turn-off which is not trained by distillation
             reg_loss = tf.add_n(tf.losses.get_regularization_losses())
             distillation_loss = tf.get_collection('dist')[0]
-            
+
             cond = epoch < init_epoch
-            total_loss = tf.cond(cond, lambda : distillation_loss + reg_loss,
-                                       lambda : class_loss + reg_loss)
+            total_loss = class_loss + reg_loss
             tf.summary.scalar('loss/total_loss', total_loss)
             gradients  = optimize.compute_gradients(class_loss,             var_list = variables)
             gradient_wdecay = optimize.compute_gradients(reg_loss,          var_list = variables)
@@ -57,8 +56,8 @@ def Optimizer_w_Distillation(class_loss, LR, epoch, init_epoch, global_step, Dis
             # multi-task learning w/ distillation gradients clipping
             # distillation gradients are clipped by norm of main-task gradients
             reg_loss = tf.add_n(tf.losses.get_regularization_losses())
-            distillation_loss = tf.add_n(tf.get_collection('dist'))
-            
+            distillation_loss = tf.get_collection('dist')[0]
+
             total_loss = class_loss + reg_loss + distillation_loss
             tf.summary.scalar('loss/total_loss', total_loss)
             tf.summary.scalar('loss/distillation_loss', distillation_loss)
@@ -75,6 +74,10 @@ def Optimizer_w_Distillation(class_loss, LR, epoch, init_epoch, global_step, Dis
                     elif gc[0] != None:
                         gradients[i] = (gc[0] + gw, gc[1])
                         
+            if Distillation[-3:] == 'SVP':
+                gradient_dist += optimize.compute_gradients(tf.add_n(tf.get_collection('basis_loss')),
+                                                            var_list = tf.get_collection('basises'))
+                
         # merge update operators and make train operator
         update_ops.append(optimize.apply_gradients(gradients, global_step=global_step))
         update_op = tf.group(*update_ops)
@@ -152,17 +155,16 @@ def Optimizer_w_MHGD(class_loss, LR, epoch, init_epoch, global_step):
     with tf.variable_scope('Optimizer_w_Distillation'):
         phase = epoch < init_epoch
         # get variables and update operations
-        variables_teacher = tf.get_collection('Teacher')
         variables_mha     = tf.get_collection('MHA')
-        variables         = list(set(tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES))-set(variables_teacher)-set(variables_mha))
-        
+        variables         = [v for v in tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES) if split('/',v.name)[0] == 'Student']
         reg_loss          = tf.add_n(tf.losses.get_regularization_losses())
         mha_loss          = tf.add_n(tf.get_collection('MHA_loss'))
+        tf.summary.scalar('loss/mha_loss', mha_loss)
         for v in variables_mha:
-            if split('/',v.name)[-1][0] in {'g','w','b'}:
+            if v.name.split('/')[-1][0] in {'g','w','b'}:
                 mha_loss += tf.reduce_sum(tf.square(v))*5e-4
                 
-        distillation_loss = tf.add_n(tf.get_collection('dist'))
+        distillation_loss = tf.get_collection('dist')[0]
         
         total_loss = tf.cond(phase, lambda : mha_loss,
                                     lambda : distillation_loss + reg_loss + class_loss)
@@ -185,18 +187,19 @@ def Optimizer_w_MHGD(class_loss, LR, epoch, init_epoch, global_step):
                     gradients[i] = (gw + gc[0] + gd, gc[1])
                 elif gc[0] != None:
                     gradients[i] = (gw + gc[0]     , gc[1])
-           
+
         # merge update operators and make train operator
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-        update_ops_mha = [u for u in update_ops if split('/',u.name)[0] == 'Distillation'] 
-        update_ops     = [u for u in update_ops if split('/',u.name)[0] != 'Distillation']
+        update_ops_mha = [u for u in update_ops if split('/',u.name)[0] == 'Distillation']
+        update_ops     = [u for u in update_ops if split('/',u.name)[0] == 'Student']
         update_ops.append(optimize.apply_gradients(gradients, global_step=global_step))
         update_op = tf.group(*update_ops)
         train_op = control_flow_ops.with_dependencies([update_op], total_loss, name='train_op')
-        
+
         update_ops_mha.append(optimize.apply_gradients(gradients_mha, global_step=global_step))
         update_op_mha = tf.group(*update_ops_mha)
         train_op_mha = control_flow_ops.with_dependencies([update_op_mha], mha_loss, name='train_op_mha')
+
         return train_op, train_op_mha
     
 def sigmoid(x, k, d = 1):
@@ -204,4 +207,4 @@ def sigmoid(x, k, d = 1):
     s = tf.cond(tf.greater(s,1-1e-8),
                 lambda : 1.0, lambda : s)
     return s
-
+    

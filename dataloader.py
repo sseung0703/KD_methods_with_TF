@@ -2,17 +2,14 @@ import tensorflow as tf
 import scipy.io as sio    
 import numpy as np
 
-def Dataloader(name, home_path):
+def Dataloader(name, home_path, model_name):
     if name == 'cifar100':
-        return Cifar100(home_path)
+        return Cifar100(home_path, model_name)
 
-DATA_DIR = '/home/cvip/Documents/data/'
-
-def Cifar100(home_path):
+def Cifar100(home_path, model_name):
     from tensorflow.keras.datasets.cifar100 import load_data
     (train_images, train_labels), (val_images, val_labels) = load_data()
-
-    teacher = sio.loadmat(home_path + '/pre_trained/ResNet32.mat')
+    teacher = sio.loadmat(home_path + '/pre_trained/%s.mat'%model_name)
     def pre_processing(image, is_training):
         with tf.variable_scope('preprocessing'):
             image = tf.cast(image, tf.float32)

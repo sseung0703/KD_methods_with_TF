@@ -1,6 +1,7 @@
 import tensorflow as tf
 
 from tensorflow import ConfigProto
+from tensorflow.keras.datasets.cifar100 import load_data
 
 import time, os
 import scipy.io as sio
@@ -13,29 +14,29 @@ import op_util
 
 home_path = os.path.dirname(os.path.abspath(__file__))
 
-tf.app.flags.DEFINE_string('train_dir', '/home/cvip/Documents/tf/KD/GIT/CIFAR100/ResNet/teacher',
+tf.app.flags.DEFINE_string('train_dir', 'test',
                            'Directory where checkpoints and event logs are written to.')
-tf.app.flags.DEFINE_string('Distillation', None,
-                           'Distillation method : Soft_logits, FitNet, AT, FSP, DML, KD-SVD, AB, RKD, MHGD, FT')
+tf.app.flags.DEFINE_string('Distillation', 'MHGD',
+                           'Distillation method : Soft_logits, FitNet, AT, FSP, DML, KD-SVD, FT, AB, RKD, MHGD')
 tf.app.flags.DEFINE_string('dataset', 'cifar100',
                            'Distillation method : cifar100, TinyImageNet, CUB200')
+tf.app.flags.DEFINE_string('model_name', 'ResNet',
+                           'Distillation method : ResNet, WResNet')
 tf.app.flags.DEFINE_string('main_scope', 'Student',
                            'networ`s scope')
 FLAGS = tf.app.flags.FLAGS
 def main(_):
     ### define path and hyper-parameter
-    model_name   = 'ResNet'
     Learning_rate =1e-1
 
     batch_size = 128
     val_batch_size = 200
     train_epoch = 100
     init_epoch = 40 if FLAGS.Distillation in {'FitNet', 'FSP', 'FT', 'AB', 'MHGD'} else 0
-    
     total_epoch = init_epoch + train_epoch
     weight_decay = 5e-4
 
-    should_log          = 200
+    should_log          = 100
     save_summaries_secs = 20
     tf.logging.set_verbosity(tf.logging.INFO)
     gpu_num = '0'
@@ -43,7 +44,7 @@ def main(_):
     if FLAGS.Distillation == 'None':
         FLAGS.Distillation = None
         
-    train_images, train_labels, val_images, val_labels, pre_processing, teacher = Dataloader(FLAGS.dataset, home_path)
+    train_images, train_labels, val_images, val_labels, pre_processing, teacher = Dataloader(FLAGS.dataset, home_path, FLAGS.model_name)
     num_label = int(np.max(train_labels)+1)
 
     dataset_len, *image_size = train_images.shape
@@ -67,19 +68,17 @@ def main(_):
         LR = learning_rate_scheduler(Learning_rate, [epoch, init_epoch, train_epoch], [0.3, 0.6, 0.8], 0.1)
         
         ## load Net
-        class_loss, accuracy = MODEL(model_name, FLAGS.main_scope, weight_decay, image, label,
-                                     is_training_ph, reuse = False, drop = True, Distillation = FLAGS.Distillation)
+        class_loss, accuracy = MODEL(FLAGS.model_name, FLAGS.main_scope, weight_decay, image, label, [is_training_ph, epoch < init_epoch], Distillation = FLAGS.Distillation)
         
         #make training operator
         if FLAGS.Distillation == 'DML':
             train_op, teacher_train_op = op_util.Optimizer_w_DML( class_loss, LR, epoch, init_epoch, global_step)
         elif FLAGS.Distillation == 'MHGD':
-            train_op, train_op2 = op_util.Optimizer_w_MHGD(class_loss, LR, epoch, init_epoch, global_step)
+            train_op, train_mha = op_util.Optimizer_w_MHGD(class_loss, LR, epoch, init_epoch, global_step)
         elif FLAGS.Distillation == 'FT':
             train_op, train_op2 = op_util.Optimizer_w_FT(class_loss, LR, epoch, init_epoch, global_step)
         else:
             train_op = op_util.Optimizer_w_Distillation(class_loss, LR, epoch, init_epoch, global_step, FLAGS.Distillation)
-        
         
         ## collect summary ops for plotting in tensorboard
         summary_op = tf.summary.merge(tf.get_collection(tf.GraphKeys.SUMMARIES), name='summary_op')
@@ -98,6 +97,7 @@ def main(_):
         config.gpu_options.allow_growth=True
         
         val_itr = len(val_labels)//val_batch_size
+        logs = {'training_acc' : [], 'validation_acc' : []}
         with tf.Session(config=config) as sess:
             if FLAGS.Distillation is not None and FLAGS.Distillation != 'DML':
                 global_variables  = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES)
@@ -105,7 +105,7 @@ def main(_):
                 for v in global_variables:
                     if teacher.get(v.name[:-2]) is not None:
                         v._initial_value = tf.constant(teacher[v.name[:-2]].reshape(*v.get_shape().as_list()))
-                        v.initializer_op = tf.assign(v._variable, v._initial_value, name = v.name[:-2] + 'Assign').op
+                        v._initializer_op = tf.assign(v._variable,v._initial_value,name= v.name[:-2]+'/Assign').op
                         n += 1
                 print ('%d Teacher params assigned'%n)
             sess.run(tf.global_variables_initializer())
@@ -114,6 +114,7 @@ def main(_):
             idx = list(range(train_labels.shape[0]))
             shuffle(idx)
             epoch_ = 0
+            
             for step in range(max_number_of_steps):
                 start_time = time.time()
                 
@@ -124,8 +125,8 @@ def main(_):
                                           label_ph : np.squeeze(train_labels[idx[:batch_size]]),
                                           is_training_ph : True})
                                           
-                elif FLAGS.Distillation == 'MHGD' and (step*batch_size)//dataset_len < init_epoch:
-                    tl, log, train_acc = sess.run([train_op2, summary_op, accuracy],
+                if FLAGS.Distillation == 'MHGD' and (step*batch_size)//dataset_len < init_epoch:
+                    tl, log, train_acc = sess.run([train_mha, summary_op, accuracy],
                                                   feed_dict = {image_ph : train_images[idx[:batch_size]],
                                                                label_ph : np.squeeze(train_labels[idx[:batch_size]]),
                                                                is_training_ph : True})
@@ -163,8 +164,10 @@ def main(_):
 
                     result_log = sess.run(val_summary_op, feed_dict={train_acc_place : sum_train_accuracy,
                                                                      val_acc_place   : sum_val_accuracy   })
+                    logs['training_acc'].append(sum_train_accuracy)
+                    logs['validation_acc'].append(sum_val_accuracy)
     
-                    if (step*batch_size)//dataset_len == init_epoch and init_epoch > 0:
+                    if (step*batch_size)//dataset_len == init_epoch and FLAGS.Distillation in {'FitNet', 'FSP', 'AB'}:
                         #re-initialize Momentum for fair comparison w/ initialization and multi-task learning methods
                         for v in global_variables:
                             if v.name[:-len('Momentum:0')]=='Momentum:0':
@@ -177,6 +180,8 @@ def main(_):
                     sum_train_accuracy = []
 
                     epoch_ += 1
+                    
+                    variables  = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)+tf.get_collection('BN_collection')
                     
                 if step % should_log == 0:
                     tf.logging.info('global step %s: loss = %.4f (%.3f sec/step)',str(step).rjust(6, '0'), np.mean(total_loss), np.mean(time_elapsed))
@@ -192,18 +197,20 @@ def main(_):
             var = {}
             variables  = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)+tf.get_collection('BN_collection')
             for v in variables:
-                var[v.name[:-2]] = sess.run(v)
-
+                if v.name.split('/')[0] == FLAGS.main_scope:
+                    var[v.name[:-2]] = sess.run(v)
+            
             sio.savemat(FLAGS.train_dir + '/train_params.mat',var)
+            sio.savemat(FLAGS.train_dir + '/log.mat',logs)
             
             ## close all
             tf.logging.info('Finished training! Saving model to disk.')
             train_writer.add_session_log(tf.SessionLog(status=tf.SessionLog.STOP))
             train_writer.close()
 
-def MODEL(model_name, scope, weight_decay, image, label, is_training, reuse, drop, Distillation):
+def MODEL(model_name, scope, weight_decay, image, label, is_training, Distillation):
     network_fn = nets_factory.get_network_fn(model_name, weight_decay = weight_decay)
-    end_points = network_fn(image, label, scope, is_training=is_training, reuse=reuse, drop = drop, Distill=Distillation)
+    end_points = network_fn(image, label, scope, is_training=is_training, Distill=Distillation)
 
     loss = tf.losses.softmax_cross_entropy(label,end_points['Logits'])
     if Distillation == 'DML':
@@ -222,5 +229,4 @@ def learning_rate_scheduler(Learning_rate, epochs, decay_point, decay_rate):
 
 if __name__ == '__main__':
     tf.app.run()
-
 

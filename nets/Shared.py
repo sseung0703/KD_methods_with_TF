@@ -44,15 +44,15 @@ def KD_SVD(student_feature_maps, teacher_feature_maps, dist_type = 'SVD'):
             with tf.variable_scope('Compress_feature_map%d'%i):
                 if dist_type == 'SVD':
                     Sigma_T, U_T, V_T = SVP.SVD(tfm, K, name = 'TSVD%d'%i)
-                    Sigma_S, U_S, V_S = SVP.SVD(sfm, K, name = 'SSVD%d'%i)
+                    Sigma_S, U_S, V_S = SVP.SVD(sfm, K+3, name = 'SSVD%d'%i)
                     B, D,_ = V_S.get_shape().as_list()
-                    V_S, mask = SVP.Align_rsv(V_T, V_S)
+                    V_S, V_T = SVP.Align_rsv(V_S, V_T)
                     
                 elif dist_type == 'EID':
                     Sigma_T, U_T, V_T = SVP.SVD_eid(tfm, K, name = 'TSVD%d'%i)
-                    Sigma_S, U_S, V_S = SVP.SVD_eid(sfm, K, name = 'SSVD%d'%i)
+                    Sigma_S, U_S, V_S = SVP.SVD_eid(sfm, K+3, name = 'SSVD%d'%i)
                     B, D,_ = V_S.get_shape().as_list()
-                    V_S, mask = SVP.Align_rsv(V_T, V_S)
+                    V_S, V_T = SVP.Align_rsv(V_S, V_T)
                 
                 Sigma_T = tf.expand_dims(Sigma_T,1)
                 V_T *= Sigma_T

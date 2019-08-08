@@ -57,7 +57,6 @@ def SVD_eid(X, n, name = None):
                 xxt = tf.matmul(x_,x_,transpose_b = True)
                 with tf.device('CPU'):
                     _,u_svd,_ = tf.svd(xxt,full_matrices=False)
-
                 v_svd = tf.matmul(x_, u_svd, transpose_a = True)
                 s_svd = tf.linalg.norm(v_svd, axis = 1)
                 v_svd = removenan(v_svd/tf.expand_dims(s_svd,1))
@@ -67,6 +66,7 @@ def SVD_eid(X, n, name = None):
                 with tf.device('CPU'):
                     _, v_svd = tf.linalg.eigh(xtx)
                 v_svd = tf.reshape(tf.image.flip_left_right(tf.reshape(v_svd,[-1,D,D,1])),[-1,D,D])
+
                 u_svd = tf.matmul(x_, v_svd)
                 s_svd = tf.linalg.norm(u_svd, axis = 1)
                 u_svd = removenan(u_svd/tf.expand_dims(s_svd,1))
@@ -81,13 +81,14 @@ def SVD_eid(X, n, name = None):
         
         return s, U, V
     
-def Align_rsv(V_T, V_S):
-    cosine = tf.stop_gradient(tf.matmul(V_T, V_S, transpose_a=True))
-    mask = tf.where(tf.equal(tf.reduce_max(tf.abs(cosine), 2,keepdims=True), tf.abs(cosine)),
-                    tf.sign(cosine), tf.zeros_like(cosine))
-    V_S = tf.matmul(V_S, mask, transpose_b = True)
-    return V_S, mask
-
+def Align_rsv(x, y):
+    with tf.variable_scope('Align'):
+        cosine = tf.matmul(x, y, transpose_a=True)
+        mask = tf.where(tf.equal(tf.reduce_max(tf.abs(cosine), 1,keepdims=True), tf.abs(cosine)),
+                       tf.sign(cosine), tf.zeros_like(cosine))
+        x = tf.matmul(x, mask)
+        return x, y
+    
 @tf.RegisterGradient('Svd_')
 def gradient_svd(op, ds, dU, dV):
     s, U, V = op.outputs
@@ -111,8 +112,8 @@ def gradient_svd(op, ds, dU, dV):
         U, V = (V, U); dU, dV = (dV, dU)
         D = tf.matmul(dU,tf.matrix_diag(1/(s+1e-8)))
     
-        grad = tf.matmul(D + tf.matmul(U, tf.matrix_diag(tf.matrix_diag_part(-tf.matmul(U,D,transpose_a=True)))
-                           + 2*tf.matmul(S, msym(KT*(-tf.matmul(D,tf.matmul(U,S),transpose_a=True))))) ,V,transpose_b=True)
+        grad = tf.matmul(D - tf.matmul(U, tf.matrix_diag(tf.matrix_diag_part(tf.matmul(U,D,transpose_a=True)))
+                           + 2*tf.matmul(S, msym(KT*(tf.matmul(D,tf.matmul(U,S),transpose_a=True))))), V,transpose_b=True)
         
         grad = tf.matrix_transpose(grad)
         return grad
@@ -121,7 +122,7 @@ def gradient_svd(op, ds, dU, dV):
         grad = tf.matmul(2*tf.matmul(U, tf.matmul(S, msym(KT*(tf.matmul(V,dV,transpose_a=True)))) ),V,transpose_b=True)
         return grad
     
-    grad = tf.cond(tf.greater(v_sz, u_sz), lambda : left_grad(U,S,V,dU,dV), 
+    grad = tf.cond(tf.greater(v_sz, u_sz), lambda :  left_grad(U,S,V,dU,dV), 
                                            lambda : right_grad(U,S,V,dU,dV))
     
     return [grad]
@@ -132,4 +133,3 @@ def gradient_eid(op, ds, dU, dV):
 @function.Defun(tf.float32, tf.float32,tf.float32,tf.float32,func_name = 'EID', python_grad_func = gradient_eid)
 def SVD_grad_map(x, s, u, v):
     return s,u,v 
-
