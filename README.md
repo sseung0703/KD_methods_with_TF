@@ -25,7 +25,7 @@ Defined knowledge by the neural response of the hidden layer or the output layer
   - [Jangho Kim et al. "Paraphrasing Complex Network: Network Compression via Factor Transfer" Advances in Neural Information Processing Systems (NeurIPS) 2018](https://papers.nips.cc/paper/7541-paraphrasing-complex-network-network-compression-via-factor-transfer)
 
 ## Multi-connection Knowledge
-Increases knowledge by sensing several points of the teacher network
+Increase the quantity of knowledge by sensing several points of the teacher network
 - FitNet : To increase amounts of information, knowledge is defined by multi-connected networks and compared feature maps by L2-distance.
   - [Adriana Romero, et al. Fitnets: Hints for thin deep nets. arXiv preprint arXiv:1412.6550, 2014.](https://arxiv.org/abs/1412.6550)
 - Attention transfer (AT) : Knowledge is defined by attention map which is L2-norm of each feature point.
@@ -34,7 +34,7 @@ Increases knowledge by sensing several points of the teacher network
   - [Byeongho Heo, et. al. Knowledge transfer via distillation of activation boundaries formed by hidden neurons. AAAI2019](https://arxiv.org/abs/1811.03233) (rivised by Author)
 
 ## Shared-representation Knowledge
-Defined knowledge by the relation between two feature maps
+Defined knowledge by the shapred representation between two feature maps
 - Flow of Procedure (FSP) : To soften teacher network's constraint, they define knowledge as relation of two feature maps.
   - [Junho Yim, et. al. A gift from knowledge distillation:
 Fast optimization, network minimization, and transfer learning. CVPR 2017.](http://openaccess.thecvf.com/content_cvpr_2017/html/Yim_A_Gift_From_CVPR_2017_paper.html)
