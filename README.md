@@ -34,7 +34,7 @@ Increase the quantity of knowledge by sensing several points of the teacher netw
   - [Byeongho Heo, et. al. Knowledge transfer via distillation of activation boundaries formed by hidden neurons. AAAI2019](https://arxiv.org/abs/1811.03233) (rivised by Author)
 
 ## Shared-representation Knowledge
-Defined knowledge by the shapred representation between two feature maps
+Defined knowledge by the shared representation between two feature maps
 - Flow of Procedure (FSP) : To soften teacher network's constraint, they define knowledge as relation of two feature maps.
   - [Junho Yim, et. al. A gift from knowledge distillation:
 Fast optimization, network minimization, and transfer learning. CVPR 2017.](http://openaccess.thecvf.com/content_cvpr_2017/html/Yim_A_Gift_From_CVPR_2017_paper.html)
