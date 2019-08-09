@@ -1,7 +1,6 @@
 import tensorflow as tf
 
 from tensorflow import ConfigProto
-from tensorflow.keras.datasets.cifar100 import load_data
 
 import time, os
 import scipy.io as sio
@@ -53,6 +52,7 @@ def main(_):
         # make placeholder for inputs
         image_ph = tf.placeholder(tf.uint8, [None]+image_size)
         label_ph = tf.placeholder(tf.int32, [None])
+        
         is_training_ph = tf.placeholder(tf.bool,[])
         
         # pre-processing
@@ -71,10 +71,13 @@ def main(_):
         class_loss, accuracy = MODEL(FLAGS.model_name, FLAGS.main_scope, weight_decay, image, label, [is_training_ph, epoch < init_epoch], Distillation = FLAGS.Distillation)
         
         #make training operator
+                #make training operator
         if FLAGS.Distillation == 'DML':
             train_op, teacher_train_op = op_util.Optimizer_w_DML( class_loss, LR, epoch, init_epoch, global_step)
+        elif FLAGS.Distillation in {'FitNet', 'FSP', 'AB'}:
+            train_op, train_op2 = op_util.Optimizer_w_Initializer(class_loss, LR, epoch, init_epoch, global_step)
         elif FLAGS.Distillation == 'MHGD':
-            train_op, train_mha = op_util.Optimizer_w_MHGD(class_loss, LR, epoch, init_epoch, global_step)
+            train_op, train_op2 = op_util.Optimizer_w_MHGD(class_loss, LR, epoch, init_epoch, global_step)
         elif FLAGS.Distillation == 'FT':
             train_op, train_op2 = op_util.Optimizer_w_FT(class_loss, LR, epoch, init_epoch, global_step)
         else:
@@ -125,8 +128,8 @@ def main(_):
                                           label_ph : np.squeeze(train_labels[idx[:batch_size]]),
                                           is_training_ph : True})
                                           
-                if FLAGS.Distillation == 'MHGD' and (step*batch_size)//dataset_len < init_epoch:
-                    tl, log, train_acc = sess.run([train_mha, summary_op, accuracy],
+                if FLAGS.Distillation in {'FitNet', 'FSP', 'FT', 'AB', 'MHGD', 'PCA_KD'} and (step*batch_size)//dataset_len < init_epoch:
+                    tl, log, train_acc = sess.run([train_op2, summary_op, accuracy],
                                                   feed_dict = {image_ph : train_images[idx[:batch_size]],
                                                                label_ph : np.squeeze(train_labels[idx[:batch_size]]),
                                                                is_training_ph : True})
@@ -150,8 +153,7 @@ def main(_):
                     ## do validation
                     sum_val_accuracy = []
                     for i in range(val_itr):
-                        val_batch = val_images[i*val_batch_size:(i+1)*val_batch_size]
-                        acc = sess.run(accuracy, feed_dict = {image_ph : val_batch,
+                        acc = sess.run(accuracy, feed_dict = {image_ph : val_images[i*val_batch_size:(i+1)*val_batch_size],
                                                               label_ph : np.squeeze(val_labels[i*val_batch_size:(i+1)*val_batch_size]),
                                                               is_training_ph : False})
                         sum_val_accuracy.append(acc)
@@ -215,7 +217,7 @@ def MODEL(model_name, scope, weight_decay, image, label, is_training, Distillati
     loss = tf.losses.softmax_cross_entropy(label,end_points['Logits'])
     if Distillation == 'DML':
         tf.add_to_collection('teacher_class_loss',tf.losses.softmax_cross_entropy(label,end_points['Logits_tch']))
-    accuracy = tf.contrib.metrics.accuracy(tf.to_int32(tf.argmax(end_points['Logits'], 1)), tf.to_int32(tf.argmax(label, 1)))
+    accuracy = tf.contrib.metrics.accuracy(tf.cast(tf.argmax(end_points['Logits'], 1), tf.int32), tf.cast(tf.argmax(label, 1),tf.int32))
     return loss, accuracy
     
 def learning_rate_scheduler(Learning_rate, epochs, decay_point, decay_rate):
@@ -229,4 +231,5 @@ def learning_rate_scheduler(Learning_rate, epochs, decay_point, decay_rate):
 
 if __name__ == '__main__':
     tf.app.run()
+
 

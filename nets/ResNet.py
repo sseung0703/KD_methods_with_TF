@@ -92,12 +92,16 @@ def ResNet(image, label, scope, is_training, Distill = None):
             student_feats = feats[:len(feats)//2]
             teacher_feats = feats[len(feats)//2:]
             
+            feats_noact = tf.get_collection('feat')
+            student_feats_noact = feats_noact[:len(feats)//2]
+            teacher_feats_noact = feats_noact[len(feats)//2:]
+            
             if Distill == 'Soft_logits':
                 tf.add_to_collection('dist', Response.Soft_logits(logits, logits_tch, 4))
             elif Distill == 'DML':
                 tf.add_to_collection('dist', Response.DML(logits, logits_tch))
             elif Distill == 'FT':
-                tf.add_to_collection('dist', Response.Factor_Transfer(student_feats[-1], teacher_feats[-1]))
+                tf.add_to_collection('dist', Response.Factor_Transfer(student_feats_noact[-1], teacher_feats_noact[-1]))
                 
             elif Distill == 'FitNet':
                 tf.add_to_collection('dist', Multiple.FitNet(student_feats, teacher_feats))
