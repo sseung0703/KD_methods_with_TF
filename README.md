@@ -20,7 +20,7 @@ Defined knowledge by the neural response of the hidden layer or the output layer
 - Soft-logit : The first knowledge distillation method for deep neural network. Knowledge is defined by softened logits. Because it is easy to handle it, many applied methods were proposed using it such as semi-supervised learning, defencing adversarial attack and so on.
   - [Geoffrey Hinton, et al. Distilling the knowledge in a neural network. arXiv:1503.02531, 2015.](https://arxiv.org/abs/1503.02531)
 - Deep Mutual Learning (DML) : train teacher and student network coincidently, to follow not only training results but teacher network's training procedure.
-  - [Zhang, Ying, et al. "Deep mutual learning." Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition. 2018.](http://openaccess.thecvf.com/content_cvpr_2018/html/Zhang_Deep_Mutual_Learning_CVPR_2018_paper.html)\
+  - [Zhang, Ying, et al. "Deep mutual learning." Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition. 2018.](http://openaccess.thecvf.com/content_cvpr_2018/html/Zhang_Deep_Mutual_Learning_CVPR_2018_paper.html)
 - Factor Transfer (FT) : Encode a teacher network's feature map, and transfer the knowledge by mimicking it.
   - [Jangho Kim et al. "Paraphrasing Complex Network: Network Compression via Factor Transfer" Advances in Neural Information Processing Systems (NeurIPS) 2018](https://papers.nips.cc/paper/7541-paraphrasing-complex-network-network-compression-via-factor-transfer)
 
@@ -29,9 +29,9 @@ Increase the quantity of knowledge by sensing several points of the teacher netw
 - FitNet : To increase amounts of information, knowledge is defined by multi-connected networks and compared feature maps by L2-distance.
   - [Adriana Romero, et al. Fitnets: Hints for thin deep nets. arXiv preprint arXiv:1412.6550, 2014.](https://arxiv.org/abs/1412.6550)
 - Attention transfer (AT) : Knowledge is defined by attention map which is L2-norm of each feature point.
-  - [Zagoruyko, Sergey et. al. Paying more attention to attention: Improving the performance of convolutional neural networks via attention transfer. arXiv preprint arXiv:1612.03928, 2016.](https://arxiv.org/pdf/1612.03928.pdf)
+  - [Zagoruyko, Sergey et. al. Paying more attention to attention: Improving the performance of convolutional neural networks via attention transfer. arXiv preprint arXiv:1612.03928, 2016.](https://arxiv.org/pdf/1612.03928.pdf) [[the original project link](https://github.com/szagoruyko/attention-transfer)]
 - Activation boundary (AB) : To soften teacher network's constraint, they propose the new metric function inspired by hinge loss which usually used for SVM.
-  - [Byeongho Heo, et. al. Knowledge transfer via distillation of activation boundaries formed by hidden neurons. AAAI2019](https://arxiv.org/abs/1811.03233) (rivised by Author)
+  - [Byeongho Heo, et. al. Knowledge transfer via distillation of activation boundaries formed by hidden neurons. AAAI2019](https://arxiv.org/abs/1811.03233) (rivised by Author) [[the original project link](https://github.com/bhheo/AB_distillation)]
 
 ## Shared-representation Knowledge
 Defined knowledge by the shared representation between two feature maps
@@ -39,15 +39,15 @@ Defined knowledge by the shared representation between two feature maps
   - [Junho Yim, et. al. A gift from knowledge distillation:
 Fast optimization, network minimization, and transfer learning. CVPR 2017.](http://openaccess.thecvf.com/content_cvpr_2017/html/Yim_A_Gift_From_CVPR_2017_paper.html)
 - KD using Singular value decomposition(KD-SVD) : To extract major information in feature map, they use singular value decomposition.
-  - [Seung Hyun Lee, et. al. Self-supervised knowledge distillation using singular value decomposition. ECCV 2018](http://openaccess.thecvf.com/content_ECCV_2018/html/SEUNG_HYUN_LEE_Self-supervised_Knowledge_Distillation_ECCV_2018_paper.html)
+  - [Seung Hyun Lee, et. al. Self-supervised knowledge distillation using singular value decomposition. ECCV 2018](http://openaccess.thecvf.com/content_ECCV_2018/html/SEUNG_HYUN_LEE_Self-supervised_Knowledge_Distillation_ECCV_2018_paper.html) [[the original project link](https://github.com/sseung0703/SSKD_SVD)]
 
 ## Relational Knowledge
 Defined knowledge by intra-data relation
 - Relational Knowledge Distillation (RKD): they propose knowledge which contains not only feature information but also intra-data relation information.
-  - [Wonpyo Park, et. al. Relational Knowledge Distillation. CVPR2019](https://arxiv.org/abs/1904.05068?context=cs.LG)
+  - [Wonpyo Park, et. al. Relational Knowledge Distillation. CVPR2019](https://arxiv.org/abs/1904.05068?context=cs.LG) [[the original project link](https://github.com/lenscloth/RKD)]
 - Multi-head Graph Distillation (MHGD): They proposed the distillation module which built with the multi-head attention network. 
 Each attention-head extracts the relation of feature map which contains knowledge about embedding procedure.
-  - [Seunghyun Lee, Byung Cheol Song. Graph-based Knowledge Distillation by Multi-head Attention Network. will be published in BMVC2019](https://arxiv.org/abs/1907.02226)
+  - [Seunghyun Lee, Byung Cheol Song. Graph-based Knowledge Distillation by Multi-head Attention Network. will be published in BMVC2019](https://arxiv.org/abs/1907.02226) [[the original project link](https://github.com/sseung0703/MHGD)]
   
 # Experimental Results
 The below table and plot are sample results using [ResNet](http://openaccess.thecvf.com/content_cvpr_2016/html/He_Deep_Residual_Learning_CVPR_2016_paper.html) and train on CIFAR100.
