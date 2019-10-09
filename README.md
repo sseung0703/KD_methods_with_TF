@@ -32,7 +32,8 @@ Increase the quantity of knowledge by sensing several points of the teacher netw
   - [Zagoruyko, Sergey et. al. Paying more attention to attention: Improving the performance of convolutional neural networks via attention transfer. arXiv preprint arXiv:1612.03928, 2016.](https://arxiv.org/pdf/1612.03928.pdf) [[the original project link](https://github.com/szagoruyko/attention-transfer)]
 - Activation boundary (AB) : To soften teacher network's constraint, they propose the new metric function inspired by hinge loss which usually used for SVM.
   - [Byeongho Heo, et. al. Knowledge transfer via distillation of activation boundaries formed by hidden neurons. AAAI2019](https://arxiv.org/abs/1811.03233) (rivised by Author) [[the original project link](https://github.com/bhheo/AB_distillation)]
-  - VID : Define variational lower boundary as the knowledge, to maximize mutual information between teacher and student network. [Ahn, et. al. Variational Information Distillation for Knowledge Transfer](http://openaccess.thecvf.com/content_CVPR_2019/papers/Ahn_Variational_Information_Distillation_for_Knowledge_Transfer_CVPR_2019_paper.pdf)
+- VID : Define variational lower boundary as the knowledge, to maximize mutual information between teacher and student network. 
+  - [Ahn, et. al. Variational Information Distillation for Knowledge Transfer](http://openaccess.thecvf.com/content_CVPR_2019/papers/Ahn_Variational_Information_Distillation_for_Knowledge_Transfer_CVPR_2019_paper.pdf)
 
 ## Shared-representation Knowledge
 Defined knowledge by the shared representation between two feature maps
