@@ -5,6 +5,8 @@ Moreover, each method is implemented by each author, so if a new researcher want
 To reduce this burden, I publish some codes and modify from my research codes.
 I'll update the code and knowledge distillation algorithm, and all of the things will be implemented using Tensorflow.
 
+Upgrade version of this Repo. will be available at this [link](https://github.com/sseung0703/Knowledge_distillation_via_TF2.0)
+
 # Implemented Knowledge Distillation Methods
 Please check detail of each category in [MHGD](https://arxiv.org/abs/1907.02226) and If you think the above categorization is useful, please consider citing the following paper.
 
