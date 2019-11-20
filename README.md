@@ -80,4 +80,4 @@ MHGD        | 73.98 | 74.30
 
 # Plan to do
 - Variational information distillation will be uploaded soon.
-- Upgrade this Repo. to TF2.0 is on going. :)
+- Upgrade this Repo. to TF2.0. :)
