@@ -6,7 +6,7 @@ import numpy as np
 
 base_path = 'Test/mhgd'
 for i in range(5):
-    subprocess.call('python Graph_KD/train_w_distill.py '
+    subprocess.call('python KD_methods_with_TF/train_w_distill.py '
                    +'--train_dir=%s%d '%(base_path,i)
                    +'--model_name=ResNet '
                    +'--Distillation=MHGD',
