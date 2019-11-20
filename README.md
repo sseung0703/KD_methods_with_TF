@@ -79,5 +79,5 @@ MHGD        | 73.98 | 74.30
 <img src="plots.png" width="800">
 
 # Plan to do
-- I decided to implement "Knowledge Distillation via Instance Relationship Graph" that only caffe code is available at https://github.com/yufanLIU/IRG. ( aborted cause its instablity :( )
 - Variational information distillation will be uploaded soon.
+- Upgrade this Repo. to TF2.0. :)
