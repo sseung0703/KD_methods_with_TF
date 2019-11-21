@@ -52,8 +52,8 @@ def ResNet(image, label, scope, is_training, Distill = None):
                 std = tcl.batch_norm(std, scope='bn0')
                 for i in range(len(stride)):            
                     std = NetworkBlock(std, n, nChannels[1+i], stride[i], name = 'Resblock%d'%i)
-                fc = tf.reduce_mean(std, [1,2])
-                logits = tcl.fully_connected(fc , label.get_shape().as_list()[-1],
+                fcs = tf.reduce_mean(std, [1,2])
+                logits = tcl.fully_connected(fcs , label.get_shape().as_list()[-1],
                                              biases_initializer = tf.zeros_initializer(),
                                              biases_regularizer = tcl.l2_regularizer(5e-4),
                                              scope = 'full')
@@ -80,8 +80,8 @@ def ResNet(image, label, scope, is_training, Distill = None):
                         tch = tcl.batch_norm(tch, scope='bn0')
                         for i in range(len(stride)):            
                             tch = NetworkBlock(tch, n, nChannels[1+i], stride[i], name = 'Resblock%d'%i)
-                        fc = tf.reduce_mean(tch, [1,2])
-                        logits_tch = tcl.fully_connected(fc , label.get_shape().as_list()[-1],
+                        fct = tf.reduce_mean(tch, [1,2])
+                        logits_tch = tcl.fully_connected(fct , label.get_shape().as_list()[-1],
                                                          biases_initializer = tf.zeros_initializer(),
                                                          biases_regularizer = tcl.l2_regularizer(weight_decay) if weight_decay > 0. else None,
                                                          scope = 'full')
@@ -116,7 +116,7 @@ def ResNet(image, label, scope, is_training, Distill = None):
                 tf.add_to_collection('dist', Shared.KD_SVD(student_feats, teacher_feats, Distill[-3:]))
 
             elif Distill == 'RKD':
-                tf.add_to_collection('dist', Relation.RKD(logits, logits_tch, l = [5e1,1e2]))
+                tf.add_to_collection('dist', Relation.RKD(fcs, fct, l = [25,50]))
             elif Distill == 'MHGD':
                 tf.add_to_collection('dist', Relation.MHGD(student_feats, teacher_feats))
                 
